@@ -1,0 +1,70 @@
+from __future__ import annotations
+
+import unittest
+from pathlib import Path
+import sys
+from urllib.error import HTTPError
+from unittest.mock import patch
+from io import StringIO
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SRC_ROOT = PROJECT_ROOT / "src"
+if str(SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SRC_ROOT))
+
+from github_client import GitHubRepositoryClient
+from security import normalize_repo_path
+
+
+class NormalizeRepoPathTests(unittest.TestCase):
+    def test_normalize_repo_path_allows_valid_relative_path(self) -> None:
+        self.assertEqual(normalize_repo_path("content/index.md"), "content/index.md")
+
+    def test_normalize_repo_path_rejects_escape_attempt(self) -> None:
+        with self.assertRaises(ValueError):
+            normalize_repo_path("../secrets.txt")
+
+
+class GitHubRepositoryClientTests(unittest.TestCase):
+    @patch("github_client.urlopen")
+    def test_read_text_file_decodes_base64_content(self, mock_urlopen) -> None:
+        mock_urlopen.return_value.__enter__.return_value = StringIO(
+            '{"type":"file","encoding":"base64","content":"SGVsbG8gZnJvbSBHaXRIdWIh"}'
+        )
+        client = GitHubRepositoryClient(
+            owner="octocat",
+            repo="portfolio",
+            token="secret-token",
+            ref="main",
+        )
+
+        content = client.read_text_file("README.md")
+
+        self.assertEqual(content, "Hello from GitHub!")
+        self.assertIsNotNone(client.ssl_context)
+
+    @patch("github_client.urlopen")
+    def test_read_text_file_surfaces_404_details(self, mock_urlopen) -> None:
+        mock_urlopen.side_effect = HTTPError(
+            url="https://api.github.com/repos/octocat/portfolio/contents/tsconfig.json?ref=main",
+            code=404,
+            msg="Not Found",
+            hdrs=None,
+            fp=StringIO('{"message":"Not Found"}'),
+        )
+        client = GitHubRepositoryClient(
+            owner="octocat",
+            repo="portfolio",
+            token="secret-token",
+            ref="main",
+        )
+
+        with self.assertRaises(FileNotFoundError) as context:
+            client.read_text_file("tsconfig.json")
+
+        self.assertIn("octocat/portfolio:tsconfig.json @ main", str(context.exception))
+        self.assertIn("GitHub message: Not Found", str(context.exception))
+
+
+if __name__ == "__main__":
+    unittest.main()
