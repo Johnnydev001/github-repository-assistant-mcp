@@ -32,8 +32,10 @@ The MCP server lives in `src/` and is responsible for:
 Current scope:
 
 - `read_file`
+- `update_file`
+- `delete_file`
 
-At the moment, the server only supports reading a text file from the private remote repository.
+At the moment, the server supports reading a text file, updating or creating a text file, and deleting a file in the private remote repository.
 
 ## Client
 
@@ -45,6 +47,8 @@ Its job is to:
 - initialize an MCP session
 - list available tools
 - invoke the `read_file` tool
+- invoke the `update_file` tool
+- invoke the `delete_file` tool
 
 This client exists so you can use the MCP server without needing a separate desktop MCP host.
 
@@ -73,6 +77,7 @@ Copy `.env.example` to `.env` and set:
 PORTFOLIO_REPO_URL=https://github.com/your-user/your-private-portfolio-repo.git
 GITHUB_TOKEN=github_pat_your_token_here
 PORTFOLIO_REPO_REF=main
+LOCAL_SOURCE_DIR=/absolute/path/to/local/replacement-files
 ```
 
 Variable meaning:
@@ -80,11 +85,12 @@ Variable meaning:
 - `PORTFOLIO_REPO_URL`: the private GitHub repository to target
 - `GITHUB_TOKEN`: a token with access to that private repository
 - `PORTFOLIO_REPO_REF`: optional branch or tag to read from
+- `LOCAL_SOURCE_DIR`: optional local directory used when `update_file` replaces content from a local file
 
 For private repositories:
 
 - classic personal access tokens typically need `repo`
-- fine-grained tokens need repository access plus `Contents: Read`
+- fine-grained tokens need repository access plus `Contents: Read` and `Contents: Write`
 
 ## Installation
 
@@ -109,6 +115,24 @@ Read a file from the private repository:
 
 ```bash
 python client/cli.py read-file --path tsconfig.json
+```
+
+Update a file with inline content:
+
+```bash
+python client/cli.py update-file --path README.md --message "Update README" --content "# New README"
+```
+
+Update a file from a local replacement file inside `LOCAL_SOURCE_DIR`:
+
+```bash
+python client/cli.py update-file --path README.md --message "Replace README" --source-path README.md
+```
+
+Delete a file:
+
+```bash
+python client/cli.py delete-file --path old-page.md --message "Remove old page"
 ```
 
 You can also use the virtualenv Python directly:
@@ -139,12 +163,14 @@ In normal usage, you do not need to start the server manually because the client
 - `.env` is local-only and ignored by git
 - GitHub access happens at runtime through `GITHUB_TOKEN`
 - TLS verification uses `certifi`
+- local replacement files are restricted to `LOCAL_SOURCE_DIR`
 
 ## Current Limitations
 
-- only one MCP tool is implemented: `read_file`
+- three MCP tools are implemented: `read_file`, `update_file`, and `delete_file`
 - the server reads from the remote GitHub repository only
-- editing, committing, branch creation, and pull request workflows are not implemented yet
+- updates are limited to files through the GitHub Contents API
+- deletes are limited to individual files through the GitHub Contents API
 
 ## Testing
 

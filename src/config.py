@@ -28,6 +28,7 @@ class Settings:
     portfolio_repo_name: str
     github_token: str
     portfolio_repo_ref: str | None
+    local_source_dir: Path | None
 
     @classmethod
     def load(cls) -> "Settings":
@@ -62,6 +63,18 @@ class Settings:
             )
 
         repo_ref = os.environ.get("PORTFOLIO_REPO_REF") or None
+        raw_local_source_dir = os.environ.get("LOCAL_SOURCE_DIR") or None
+        local_source_dir: Path | None = None
+        if raw_local_source_dir:
+            local_source_dir = Path(raw_local_source_dir).expanduser().resolve()
+            if not local_source_dir.exists():
+                raise RuntimeError(
+                    f"Configured local source directory does not exist: {local_source_dir}"
+                )
+            if not local_source_dir.is_dir():
+                raise RuntimeError(
+                    f"Configured local source directory is not a directory: {local_source_dir}"
+                )
 
         return cls(
             portfolio_repo_url=raw_repo_url,
@@ -69,4 +82,5 @@ class Settings:
             portfolio_repo_name=repo_path_parts[1],
             github_token=github_token,
             portfolio_repo_ref=repo_ref,
+            local_source_dir=local_source_dir,
         )

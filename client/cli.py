@@ -45,6 +45,49 @@ def build_parser() -> argparse.ArgumentParser:
         help="Repository-relative path of the file to read.",
     )
 
+    update_file_parser = subparsers.add_parser(
+        "update-file", help="Update a file in the configured repository."
+    )
+    update_file_parser.add_argument(
+        "--path",
+        required=True,
+        dest="relative_path",
+        help="Repository-relative path of the file to update.",
+    )
+    update_file_parser.add_argument(
+        "--message",
+        required=True,
+        dest="commit_message",
+        help="Commit message used for the remote file update.",
+    )
+    update_group = update_file_parser.add_mutually_exclusive_group(required=True)
+    update_group.add_argument(
+        "--content",
+        dest="content",
+        help="Inline UTF-8 content to write to the target file.",
+    )
+    update_group.add_argument(
+        "--source-path",
+        dest="source_relative_path",
+        help="Path inside LOCAL_SOURCE_DIR to use as the replacement file content.",
+    )
+
+    delete_file_parser = subparsers.add_parser(
+        "delete-file", help="Delete a file from the configured repository."
+    )
+    delete_file_parser.add_argument(
+        "--path",
+        required=True,
+        dest="relative_path",
+        help="Repository-relative path of the file to delete.",
+    )
+    delete_file_parser.add_argument(
+        "--message",
+        required=True,
+        dest="commit_message",
+        help="Commit message used for the remote file delete.",
+    )
+
     return parser
 
 
@@ -107,6 +150,58 @@ async def read_file(server: StdioServerParameters, relative_path: str) -> int:
     return 0
 
 
+async def update_file(
+    server: StdioServerParameters,
+    relative_path: str,
+    commit_message: str,
+    content: str | None,
+    source_relative_path: str | None,
+) -> int:
+    arguments: dict[str, str] = {
+        "relative_path": relative_path,
+        "commit_message": commit_message,
+    }
+    if content is not None:
+        arguments["content"] = content
+    if source_relative_path is not None:
+        arguments["source_relative_path"] = source_relative_path
+
+    async with stdio_client(server) as (read_stream, write_stream):
+        async with ClientSession(read_stream, write_stream) as session:
+            await session.initialize()
+            result = await session.call_tool("update_file", arguments)
+
+    if getattr(result, "isError", False):
+        print(_render_tool_result(result), file=sys.stderr)
+        return 1
+
+    print(_render_tool_result(result))
+    return 0
+
+
+async def delete_file(
+    server: StdioServerParameters,
+    relative_path: str,
+    commit_message: str,
+) -> int:
+    arguments = {
+        "relative_path": relative_path,
+        "commit_message": commit_message,
+    }
+
+    async with stdio_client(server) as (read_stream, write_stream):
+        async with ClientSession(read_stream, write_stream) as session:
+            await session.initialize()
+            result = await session.call_tool("delete_file", arguments)
+
+    if getattr(result, "isError", False):
+        print(_render_tool_result(result), file=sys.stderr)
+        return 1
+
+    print(_render_tool_result(result))
+    return 0
+
+
 async def run_command(args: argparse.Namespace) -> int:
     server = build_server_parameters(args)
 
@@ -114,6 +209,20 @@ async def run_command(args: argparse.Namespace) -> int:
         return await list_tools(server)
     if args.command == "read-file":
         return await read_file(server, args.relative_path)
+    if args.command == "update-file":
+        return await update_file(
+            server,
+            args.relative_path,
+            args.commit_message,
+            args.content,
+            args.source_relative_path,
+        )
+    if args.command == "delete-file":
+        return await delete_file(
+            server,
+            args.relative_path,
+            args.commit_message,
+        )
 
     raise ValueError(f"Unsupported command: {args.command}")
 
