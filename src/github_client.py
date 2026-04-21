@@ -34,10 +34,10 @@ class GitHubRepositoryClient:
         raw_content = payload.get("content", "").replace("\n", "")
         return base64.b64decode(raw_content).decode("utf-8")
 
-    def update_text_file(
+    def update_file_content(
         self,
         relative_path: str,
-        content: str,
+        content: bytes,
         commit_message: str,
     ) -> dict[str, str]:
         existing_sha: str | None = None
@@ -53,7 +53,7 @@ class GitHubRepositoryClient:
         request_url = self._build_contents_url(relative_path)
         request_body: dict[str, object] = {
             "message": commit_message,
-            "content": base64.b64encode(content.encode("utf-8")).decode("ascii"),
+            "content": base64.b64encode(content).decode("ascii"),
         }
         if existing_sha:
             request_body["sha"] = existing_sha

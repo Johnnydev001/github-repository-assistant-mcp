@@ -86,7 +86,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
         self.assertIn("GitHub message: Not Found", str(context.exception))
 
     @patch("github_client.urlopen")
-    def test_update_text_file_writes_with_existing_sha(self, mock_urlopen) -> None:
+    def test_update_file_content_writes_with_existing_sha(self, mock_urlopen) -> None:
         mock_urlopen.side_effect = [
             _json_response(
                 '{"type":"file","encoding":"base64","content":"T2xk","sha":"blobsha123"}'
@@ -102,7 +102,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
             ref="main",
         )
 
-        result = client.update_text_file("README.md", "New content", "Update file")
+        result = client.update_file_content("README.md", b"New content", "Update file")
 
         self.assertEqual(result["path"], "README.md")
         self.assertEqual(result["commit_sha"], "commitsha456")
@@ -112,7 +112,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
         self.assertIn(b'"branch": "main"', put_request.data)
 
     @patch("github_client.urlopen")
-    def test_update_text_file_creates_when_file_is_missing(self, mock_urlopen) -> None:
+    def test_update_file_content_creates_when_file_is_missing(self, mock_urlopen) -> None:
         mock_urlopen.side_effect = [
             HTTPError(
                 url="https://api.github.com/repos/octocat/portfolio/contents/new-file.md?ref=main",
@@ -132,7 +132,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
             ref="main",
         )
 
-        result = client.update_text_file("new-file.md", "Hello", "Create file")
+        result = client.update_file_content("new-file.md", b"Hello", "Create file")
 
         self.assertEqual(result["path"], "new-file.md")
         self.assertEqual(result["commit_sha"], "commitsha789")
@@ -140,6 +140,34 @@ class GitHubRepositoryClientTests(unittest.TestCase):
         self.assertEqual(put_request.method, "PUT")
         self.assertNotIn(b'"sha"', put_request.data)
         self.assertIn(b'"branch": "main"', put_request.data)
+
+    @patch("github_client.urlopen")
+    def test_update_file_content_supports_binary_payloads(self, mock_urlopen) -> None:
+        mock_urlopen.side_effect = [
+            HTTPError(
+                url="https://api.github.com/repos/octocat/portfolio/contents/file.pdf?ref=main",
+                code=404,
+                msg="Not Found",
+                hdrs=None,
+                fp=StringIO('{"message":"Not Found"}'),
+            ),
+            _json_response(
+                '{"content":{"path":"file.pdf"},"commit":{"sha":"commitsha999","message":"Upload pdf"}}'
+            ),
+        ]
+        client = GitHubRepositoryClient(
+            owner="octocat",
+            repo="portfolio",
+            token="secret-token",
+            ref="main",
+        )
+
+        binary_content = b"%PDF-1.7\n\xe2\xe3\xcf\xd3\n"
+        result = client.update_file_content("file.pdf", binary_content, "Upload pdf")
+
+        self.assertEqual(result["path"], "file.pdf")
+        put_request = mock_urlopen.call_args_list[1].args[0]
+        self.assertIn(b'"content": "JVBERi0xLjcK4uPP0wo="', put_request.data)
 
     @patch("github_client.urlopen")
     def test_delete_file_uses_delete_request_with_sha(self, mock_urlopen) -> None:

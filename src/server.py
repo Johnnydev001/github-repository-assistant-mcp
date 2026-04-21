@@ -32,10 +32,10 @@ def update_file(
     content: str | None = None,
     source_relative_path: str | None = None,
 ) -> str:
-    """Update or create a UTF-8 text file in the configured GitHub repository."""
+    """Update or create a file in the configured GitHub repository."""
     normalized_path = normalize_repo_path(relative_path)
     file_content = _resolve_update_content(content, source_relative_path)
-    result = github_client.update_text_file(
+    result = github_client.update_file_content(
         normalized_path,
         content=file_content,
         commit_message=commit_message,
@@ -57,12 +57,12 @@ def delete_file(relative_path: str, commit_message: str) -> str:
 def _resolve_update_content(
     inline_content: str | None,
     source_relative_path: str | None,
-) -> str:
+) -> bytes:
     if (inline_content is None) == (source_relative_path is None):
         raise ValueError("Provide exactly one of content or source_relative_path")
 
     if inline_content is not None:
-        return inline_content
+        return inline_content.encode("utf-8")
 
     if settings.local_source_dir is None:
         raise RuntimeError(
@@ -71,7 +71,7 @@ def _resolve_update_content(
         )
 
     source_path = resolve_local_source_path(settings.local_source_dir, source_relative_path or "")
-    return source_path.read_text(encoding="utf-8")
+    return source_path.read_bytes()
 
 
 def main() -> None:

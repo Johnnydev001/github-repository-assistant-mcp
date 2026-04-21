@@ -35,7 +35,7 @@ Current scope:
 - `update_file`
 - `delete_file`
 
-At the moment, the server supports reading a text file, updating or creating a text file, and deleting a file in the private remote repository.
+At the moment, the server supports reading a text file, updating or creating a file, and deleting a file in the private remote repository.
 
 ## Client
 
@@ -128,6 +128,8 @@ Update a file from a local replacement file inside `LOCAL_SOURCE_DIR`:
 ```bash
 python client/cli.py update-file --path README.md --message "Replace README" --source-path README.md
 ```
+
+When `--source-path` is used, the replacement file can be binary, for example a `.pdf`.
 
 Delete a file:
 
