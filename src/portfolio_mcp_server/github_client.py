@@ -243,7 +243,6 @@ class GitHubRepositoryClient:
         return f"{self.build_base_url()}{RequestUrlSuffix.PULL_REQUEST.value}"
 
     def build_commits_url(self, file_name: str, branch: str = "main") -> str:
-        # The correct endpoint for file history uses query parameters: ?path=<file>&sha=<branch>
         base = f"{self.build_base_url()}{RequestUrlSuffix.COMMITS.value}"
         return f"{base}?path={quote(file_name, safe='')}&sha={quote(branch, safe='')}"
 
