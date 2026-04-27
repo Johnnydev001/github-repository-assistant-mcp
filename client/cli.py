@@ -88,6 +88,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Commit message used for the remote file delete.",
     )
 
+    create_pr_parser = subparsers.add_parser(
+        "create-pr", help="Create a pull request on the configured repository."
+    )
+    create_pr_parser.add_argument("--title", required=True, help="Pull request title.")
+    create_pr_parser.add_argument("--head", required=True, help="Head branch name (source).")
+    create_pr_parser.add_argument(
+        "--base", required=True, help="Base branch name (target)."
+    )
+    create_pr_parser.add_argument("--body", help="Optional pull request body text.")
+
     return parser
 
 
@@ -202,6 +212,30 @@ async def delete_file(
     return 0
 
 
+async def create_pr(
+    server: StdioServerParameters,
+    title: str,
+    head: str,
+    base: str,
+    body: str | None,
+) -> int:
+    arguments: dict[str, object] = {"title": title, "head": head, "base": base}
+    if body is not None:
+        arguments["body"] = body
+
+    async with stdio_client(server) as (read_stream, write_stream):
+        async with ClientSession(read_stream, write_stream) as session:
+            await session.initialize()
+            result = await session.call_tool("create_pull_request", arguments)
+
+    if getattr(result, "isError", False):
+        print(_render_tool_result(result), file=sys.stderr)
+        return 1
+
+    print(_render_tool_result(result))
+    return 0
+
+
 async def run_command(args: argparse.Namespace) -> int:
     server = build_server_parameters(args)
 
@@ -222,6 +256,14 @@ async def run_command(args: argparse.Namespace) -> int:
             server,
             args.relative_path,
             args.commit_message,
+        )
+    if args.command == "create-pr":
+        return await create_pr(
+            server,
+            args.title,
+            args.head,
+            args.base,
+            args.body,
         )
 
     raise ValueError(f"Unsupported command: {args.command}")

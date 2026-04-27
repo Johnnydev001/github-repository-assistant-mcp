@@ -137,6 +137,12 @@ Delete a file:
 python client/cli.py delete-file --path old-page.md --message "Remove old page"
 ```
 
+Create a pull request:
+
+```bash
+python client/cli.py create-pr --title "Add feature" --head feature-branch --base main --body "Please merge"
+```
+
 You can also use the virtualenv Python directly:
 
 ```bash

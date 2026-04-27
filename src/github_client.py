@@ -106,6 +106,35 @@ class GitHubRepositoryClient:
             "commit_message": str(commit.get("message") or commit_message),
         }
 
+    def create_pull_request(
+        self,
+        title: str,
+        head: str,
+        base: str,
+        body: str | None = None,
+    ) -> dict[str, object]:
+        """Create a pull request on the repository.
+
+        title: PR title
+        head: the name of the branch where your changes are implemented
+        base: the name of the branch you want the changes pulled into
+        body: optional PR body text
+        Returns the JSON payload from GitHub for the created PR.
+        """
+        request_url = f"https://api.github.com/repos/{self.owner}/{self.repo}/pulls"
+        request_body: dict[str, object] = {"title": title, "head": head, "base": base}
+        if body is not None:
+            request_body["body"] = body
+
+        payload = self._perform_json_request(
+            request_url,
+            relative_path="",
+            data=request_body,
+            method="POST",
+        )
+
+        return payload
+
     def _build_contents_url(self, relative_path: str) -> str:
         base_url = (
             f"https://api.github.com/repos/{self.owner}/{self.repo}/contents/"
@@ -114,7 +143,6 @@ class GitHubRepositoryClient:
         if not self.ref:
             return base_url
         return f"{base_url}?ref={quote(self.ref, safe='')}"
-
     def _format_ref_suffix(self) -> str:
         if not self.ref:
             return ""

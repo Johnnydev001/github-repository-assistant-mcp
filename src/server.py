@@ -54,6 +54,26 @@ def delete_file(relative_path: str, commit_message: str) -> str:
     return json.dumps(result, indent=2)
 
 
+@mcp.tool()
+def create_pull_request(
+    title: str,
+    head: str,
+    base: str,
+    body: str | None = None,
+) -> str:
+    """Create a pull request on the configured repository.
+
+    Returns the JSON payload from GitHub as a pretty-printed string.
+    """
+    result = github_client.create_pull_request(
+        title=title,
+        head=head,
+        base=base,
+        body=body,
+    )
+    return json.dumps(result, indent=2)
+
+
 def _resolve_update_content(
     inline_content: str | None,
     source_relative_path: str | None,
