@@ -11,11 +11,11 @@ SRC_ROOT = PROJECT_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from github_client import GitHubRepositoryClient
+from portfolio_mcp_server.github_client import GitHubRepositoryClient
 
 
 class GitHubCreatePullRequestTests(unittest.TestCase):
-    @patch("github_client.urlopen")
+    @patch("portfolio_mcp_server.github_client.urlopen")
     def test_create_pull_request_sends_post(self, mock_urlopen) -> None:
         mock_urlopen.return_value.__enter__.return_value = StringIO(
             '{"number":123,"html_url":"https://github.com/octocat/portfolio/pull/123"}'

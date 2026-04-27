@@ -13,7 +13,7 @@ SRC_ROOT = PROJECT_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from github_client import GitHubRepositoryClient
+from portfolio_mcp_server.github_client import GitHubRepositoryClient
 from security import normalize_repo_path, resolve_local_source_path
 
 
@@ -46,7 +46,7 @@ class ResolveLocalSourcePathTests(unittest.TestCase):
 
 
 class GitHubRepositoryClientTests(unittest.TestCase):
-    @patch("github_client.urlopen")
+    @patch("portfolio_mcp_server.github_client.urlopen")
     def test_read_text_file_decodes_base64_content(self, mock_urlopen) -> None:
         mock_urlopen.return_value.__enter__.return_value = StringIO(
             '{"type":"file","encoding":"base64","content":"SGVsbG8gZnJvbSBHaXRIdWIh"}'
@@ -63,7 +63,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
         self.assertEqual(content, "Hello from GitHub!")
         self.assertIsNotNone(client.ssl_context)
 
-    @patch("github_client.urlopen")
+    @patch("portfolio_mcp_server.github_client.urlopen")
     def test_read_text_file_surfaces_404_details(self, mock_urlopen) -> None:
         mock_urlopen.side_effect = HTTPError(
             url="https://api.github.com/repos/octocat/portfolio/contents/tsconfig.json?ref=main",
@@ -85,7 +85,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
         self.assertIn("octocat/portfolio:tsconfig.json @ main", str(context.exception))
         self.assertIn("GitHub message: Not Found", str(context.exception))
 
-    @patch("github_client.urlopen")
+    @patch("portfolio_mcp_server.github_client.urlopen")
     def test_update_file_content_writes_with_existing_sha(self, mock_urlopen) -> None:
         mock_urlopen.side_effect = [
             _json_response(
@@ -111,7 +111,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
         self.assertIn(b'"sha": "blobsha123"', put_request.data)
         self.assertIn(b'"branch": "main"', put_request.data)
 
-    @patch("github_client.urlopen")
+    @patch("portfolio_mcp_server.github_client.urlopen")
     def test_update_file_content_creates_when_file_is_missing(self, mock_urlopen) -> None:
         mock_urlopen.side_effect = [
             HTTPError(
@@ -141,7 +141,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
         self.assertNotIn(b'"sha"', put_request.data)
         self.assertIn(b'"branch": "main"', put_request.data)
 
-    @patch("github_client.urlopen")
+    @patch("portfolio_mcp_server.github_client.urlopen")
     def test_update_file_content_supports_binary_payloads(self, mock_urlopen) -> None:
         mock_urlopen.side_effect = [
             HTTPError(
@@ -169,7 +169,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
         put_request = mock_urlopen.call_args_list[1].args[0]
         self.assertIn(b'"content": "JVBERi0xLjcK4uPP0wo="', put_request.data)
 
-    @patch("github_client.urlopen")
+    @patch("portfolio_mcp_server.github_client.urlopen")
     def test_delete_file_uses_delete_request_with_sha(self, mock_urlopen) -> None:
         mock_urlopen.side_effect = [
             _json_response(
