@@ -117,6 +117,47 @@ Read a file from the private repository:
 python client/cli.py read-file --path tsconfig.json
 ```
 
+Docker (portable)
+
+Build the image locally:
+
+```bash
+docker build -t portfolio-mcp .
+```
+
+Run client commands with the image. Provide required env vars (at minimum PORTFOLIO_REPO_URL and GITHUB_TOKEN).
+
+Examples:
+
+List tools:
+
+```bash
+docker run --rm -e PORTFOLIO_REPO_URL="https://github.com/your-user/your-private-repo.git" -e GITHUB_TOKEN="ghp_..." portfolio-mcp list-tools
+```
+
+Read a file:
+
+```bash
+docker run --rm -e PORTFOLIO_REPO_URL="https://github.com/your-user/your-private-repo.git" -e GITHUB_TOKEN="ghp_..." portfolio-mcp read-file --path README.md
+```
+
+Commit a file from a host directory (mount host dir into container and set LOCAL_SOURCE_DIR to the mount point):
+
+```bash
+docker run --rm \
+  -e PORTFOLIO_REPO_URL="https://github.com/your-user/your-private-repo.git" \
+  -e GITHUB_TOKEN="ghp_..." \
+  -e LOCAL_SOURCE_DIR="/data" \
+  -v /path/on/host/local_files:/data \
+  portfolio-mcp commit-file --path README.md --message "Update via docker" --source-path README.md --author-name "Alice" --author-email "alice@example.com"
+```
+
+Notes:
+
+- LOCAL_SOURCE_DIR must point to an absolute path inside the container. Bind-mount the host directory to that path with `-v`.
+- Keep your tokens secret; prefer passing them via an environment file or Docker secrets in production.
+
+
 Update a file with inline content:
 
 ```bash
