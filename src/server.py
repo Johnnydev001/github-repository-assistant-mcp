@@ -55,6 +55,12 @@ def delete_file(relative_path: str, commit_message: str) -> str:
 
 
 @mcp.tool()
+def get_file_history(file_name: str, branch: str = "main") -> str:
+    """Get the commit history for a file in the configured GitHub repository."""
+    result = github_client.get_file_history(file_name=file_name, branch=branch)
+    return json.dumps(result, indent=2)
+
+@mcp.tool()
 def create_pull_request(
     title: str,
     head: str,
@@ -62,8 +68,6 @@ def create_pull_request(
     body: str | None = None,
 ) -> str:
     """Create a pull request on the configured repository.
-
-    Returns the JSON payload from GitHub as a pretty-printed string.
     """
     result = github_client.create_pull_request(
         title=title,

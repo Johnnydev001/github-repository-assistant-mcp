@@ -1,15 +1,22 @@
 from __future__ import annotations
 
 import base64
+from dataclasses import asdict
 import json
 import ssl
 from urllib.error import HTTPError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
+from enum import Enum
 
 import certifi
+from common.types import CommitAuthor
+from utils.utils import parse_file_history_entry
 
-
+class RequestUrlSuffix(Enum):
+    PULL_REQUEST = "pulls"
+    COMMITS = "commits"
+    CONTENTS = "contents"
 class GitHubRepositoryClient:
     def __init__(
         self,
@@ -121,7 +128,7 @@ class GitHubRepositoryClient:
         body: optional PR body text
         Returns the JSON payload from GitHub for the created PR.
         """
-        request_url = f"https://api.github.com/repos/{self.owner}/{self.repo}/pulls"
+        request_url = self.build_pull_request_url()
         request_body: dict[str, object] = {"title": title, "head": head, "base": base}
         if body is not None:
             request_body["body"] = body
@@ -132,17 +139,23 @@ class GitHubRepositoryClient:
             data=request_body,
             method="POST",
         )
-
         return payload
-
-    def _build_contents_url(self, relative_path: str) -> str:
-        base_url = (
-            f"https://api.github.com/repos/{self.owner}/{self.repo}/contents/"
-            f"{quote(relative_path, safe='/')}"
+    
+    def get_file_history(self, file_name: str, branch: str = "main") -> list[CommitAuthor]:
+        request_url = self.build_commits_url(file_name, branch)
+        payload: list[dict[str,object]] = self._perform_json_request(
+            request_url,
+            relative_path="",
+            data=None,
+            method="GET",
         )
-        if not self.ref:
-            return base_url
-        return f"{base_url}?ref={quote(self.ref, safe='')}"
+        commit_authors: list[CommitAuthor] = []
+        for entry in payload:
+            parsed_entry = parse_file_history_entry(self, entry)
+            commit_authors.append(asdict(parsed_entry))
+
+        return commit_authors
+   
     def _format_ref_suffix(self) -> str:
         if not self.ref:
             return ""
@@ -185,7 +198,9 @@ class GitHubRepositoryClient:
         except HTTPError as error:
             self._raise_http_error(error, request_url, relative_path)
 
-        if not isinstance(payload, dict):
+        # Accept both object and array payloads; some GitHub endpoints (e.g. commits)
+        # return a JSON array rather than an object.
+        if not isinstance(payload, (dict, list)):
             raise RuntimeError(f"GitHub API returned an unexpected payload for {request_url}")
         return payload
 
@@ -231,3 +246,25 @@ class GitHubRepositoryClient:
         if isinstance(payload, dict) and payload.get("message"):
             return str(payload["message"])
         return json.dumps(payload)
+
+     
+    # The following methods are used to build request URLs
+    def build_base_url(self) -> str:
+        return f"https://api.github.com/repos/{self.owner}/{self.repo}/"
+
+    def build_pull_request_url(self) -> str:
+        return f"{self.build_base_url()}{RequestUrlSuffix.PULL_REQUEST.value}"
+
+    def build_commits_url(self, file_name: str, branch: str = "main") -> str:
+        base = f"{self.build_base_url()}{RequestUrlSuffix.COMMITS.value}"
+        return f"{base}?path={quote(file_name, safe='')}&sha={quote(branch, safe='')}"
+  
+    def _build_contents_url(self, relative_path: str) -> str:
+        base_url = (
+           f"{self.build_base_url()}{RequestUrlSuffix.CONTENTS.value}/"
+           f"{quote(relative_path, safe='/')}"
+        )
+        if not self.ref:
+            return base_url
+        return f"{base_url}?ref={quote(self.ref, safe='')}"
+    

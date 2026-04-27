@@ -21,6 +21,8 @@ Build, test, and run commands
   python client/cli.py update-file --path README.md --message "msg" --content "..."
   python client/cli.py update-file --path README.md --message "Replace" --source-path README.md
   python client/cli.py delete-file --path old.md --message "Remove"
+  python client/cli.py commit-file --path README.md --message "Fix" --content "..." --author-name "Alice" --author-email "alice@example.com"
+  python client/cli.py get-file-history --file-name .gitignore --branch main
   python client/cli.py create-pr --title "Add feature" --head feature-branch --base main --body "Please merge"
 
 - Tests:
@@ -60,6 +62,7 @@ Key conventions and patterns
 - Update semantics:
   - update_file supports inline `--content` or `--source-path` that must be inside LOCAL_SOURCE_DIR. Binary files are allowed when using source-path.
   - All remote changes require a `--message` (commit message) from the client and are executed via the GitHub Contents API.
+  - get_file_history returns a list of commit entries. Each entry is serialized as a dict with fields: `name`, `email`, `date`, `message`, and `url` (derived from the GitHub commit payload). The server converts internal dataclasses to plain dicts for transport.
 
 - Tools naming and placement:
   - Tools are snake_case (read_file, update_file, delete_file). Add new tools in src/server.py and wire them into the same registration pattern.

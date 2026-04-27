@@ -34,8 +34,11 @@ Current scope:
 - `read_file`
 - `update_file`
 - `delete_file`
+- `commit_file` (single-file commit with optional author metadata)
+- `get_file_history` (returns commit history for a file)
+- `create_pull_request` (open a PR from a head branch to a base branch)
 
-At the moment, the server supports reading a text file, updating or creating a file, and deleting a file in the private remote repository.
+At the moment, the server supports reading a text file, updating or creating a file, deleting a file, committing a single file on behalf of a user, fetching a file's commit history, and creating pull requests on the private remote repository.
 
 ## Client
 
@@ -49,6 +52,8 @@ Its job is to:
 - invoke the `read_file` tool
 - invoke the `update_file` tool
 - invoke the `delete_file` tool
+- invoke the `commit_file` tool (single-file commit with optional author)
+- invoke the `get_file_history` tool (list of commit entries)
 
 This client exists so you can use the MCP server without needing a separate desktop MCP host.
 
@@ -184,6 +189,24 @@ Create a pull request:
 python client/cli.py create-pr --title "Add feature" --head feature-branch --base main --body "Please merge"
 ```
 
+Get file history (returns a JSON array of commit entries):
+
+```bash
+python client/cli.py get-file-history --file-name .gitignore --branch main
+```
+
+Returned JSON shape (each entry):
+
+```json
+{
+  "name": "Author name",
+  "email": "author@example.com",
+  "date": "2026-04-27T12:34:56Z",
+  "message": "Commit message",
+  "url": "https://github.com/owner/repo/commit/..."
+}
+```
+
 You can also use the virtualenv Python directly:
 
 ```bash
@@ -216,10 +239,10 @@ In normal usage, you do not need to start the server manually because the client
 
 ## Current Limitations
 
-- three MCP tools are implemented: `read_file`, `update_file`, and `delete_file`
-- the server reads from the remote GitHub repository only
-- updates are limited to files through the GitHub Contents API
-- deletes are limited to individual files through the GitHub Contents API
+- implemented MCP tools are focused on per-file operations and lightweight repo actions: `read_file`, `update_file`, `delete_file`, `commit_file`, `get_file_history`, and `create_pull_request`.
+- the server reads from and modifies the remote GitHub repository using the GitHub REST APIs (Contents API for file ops, Pulls API for PRs).
+- bulk or atomic multi-file tree operations are not supported (use Git Data API or local workflows for complex changes).
+- authentication depends on GITHUB_TOKEN provided at runtime; ensure token has appropriate repo permissions.
 
 ## Testing
 

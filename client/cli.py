@@ -98,6 +98,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     create_pr_parser.add_argument("--body", help="Optional pull request body text.")
 
+    get_file_history_parser = subparsers.add_parser("get-file-history", help="Get the commit history for a file in the configured repository.")
+    get_file_history_parser.add_argument("--file-name", required=True, help="Name of the file to get history for.")
+    get_file_history_parser.add_argument("--branch", default="main", help="Branch name to get file history from.")
+
     return parser
 
 
@@ -211,6 +215,24 @@ async def delete_file(
     print(_render_tool_result(result))
     return 0
 
+async def get_file_history(
+    server: StdioServerParameters,
+    file_name: str,
+    branch: str = "main",
+) -> int:
+    async with stdio_client(server) as (read_stream, write_stream):
+        async with ClientSession(read_stream, write_stream) as session:
+            await session.initialize()
+            result = await session.call_tool(
+                "get_file_history",
+                {"file_name": file_name, "branch": branch},
+            )
+    if getattr(result, "isError", False):
+        print(_render_tool_result(result), file=sys.stderr)
+        return 1
+
+    print(_render_tool_result(result))
+    return 0
 
 async def create_pr(
     server: StdioServerParameters,
@@ -256,6 +278,12 @@ async def run_command(args: argparse.Namespace) -> int:
             server,
             args.relative_path,
             args.commit_message,
+        )
+    if args.command == "get-file-history":
+        return await get_file_history(
+            server,
+            args.file_name,
+            args.branch,
         )
     if args.command == "create-pr":
         return await create_pr(
