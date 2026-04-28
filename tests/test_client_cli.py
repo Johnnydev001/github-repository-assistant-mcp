@@ -5,14 +5,15 @@ from pathlib import Path
 import sys
 import unittest
 
+from server.cli import DEFAULT_SERVER_ARGS, _render_tool_result, build_server_parameters
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-SRC_ROOT = PROJECT_ROOT / "src"
-CLIENT_ROOT = PROJECT_ROOT / "client"
+SRC_ROOT = PROJECT_ROOT / "server" / "src"
+CLIENT_ROOT = PROJECT_ROOT / "server"
 for path in (SRC_ROOT, CLIENT_ROOT):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
-from cli import DEFAULT_SERVER_ARGS, _render_tool_result, build_server_parameters
 
 
 class FakeContentItem:

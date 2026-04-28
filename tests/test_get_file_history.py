@@ -6,16 +6,17 @@ import sys
 import unittest
 from unittest.mock import patch
 
+from server.src.github_client import GitHubRepositoryClient
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-SRC_ROOT = PROJECT_ROOT / "src"
+SRC_ROOT = PROJECT_ROOT / "server" / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from portfolio_mcp_server.github_client import GitHubRepositoryClient
 
 
 class GitHubCreatePullRequestTests(unittest.TestCase):
-    @patch("portfolio_mcp_server.github_client.urlopen")
+    @patch("github_client.urlopen")
     def test_get_file_history_success(self, mock_urlopen) -> None:
         # Return a JSON array like the real commits endpoint
         mock_urlopen.return_value.__enter__.return_value = StringIO(
