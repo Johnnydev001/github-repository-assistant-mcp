@@ -12,7 +12,7 @@ from mcp.client.stdio import StdioServerParameters, stdio_client
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SERVER_ARGS = [str(PROJECT_ROOT / "src" / "server.py")]
+DEFAULT_SERVER_ARGS = [str(PROJECT_ROOT / "server" / "src" / "server.py")]
 
 
 def build_parser() -> argparse.ArgumentParser:

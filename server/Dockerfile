@@ -11,9 +11,10 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy project files
-COPY pyproject.toml /app/
-COPY src/ /app/src/
-COPY client/ /app/client/
+COPY server/pyproject.toml /app/
+# Preserve the original server/ layout so the package-dir mapping in pyproject works
+COPY server/ /app/server/
+# The client CLI was moved into server/cli.py; no separate client/ directory to copy
 COPY README.md /app/
 COPY .env.example /app/
 
@@ -22,4 +23,4 @@ RUN python -m pip install --upgrade pip setuptools wheel \
     && python -m pip install --no-cache-dir -e .
 
 # Default entrypoint runs the client CLI. Pass the desired client subcommand as arguments to `docker run`.
-ENTRYPOINT ["python", "client/cli.py"]
+ENTRYPOINT ["python", "server/cli.py"]
