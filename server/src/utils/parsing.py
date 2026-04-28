@@ -1,4 +1,12 @@
-from models import CommitAuthor
+# Accept multiple import styles depending on how this module is loaded
+try:
+    from server.models import CommitAuthor
+except Exception:
+    try:
+        from server.src.models import CommitAuthor
+    except Exception:
+        from models import CommitAuthor
+
 
 def parse_file_history_entry(entry: dict[str, object]) -> CommitAuthor:
     name: str = entry.get("commit", {}).get("author", {}).get("name", "")

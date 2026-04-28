@@ -17,7 +17,6 @@ github_client = GitHubRepositoryClient(
 )
 mcp = FastMCP("portfolio-repository")
 
-
 @mcp.tool()
 def read_file(relative_path: str) -> str:
     """Read a UTF-8 text file from the configured GitHub repository."""
