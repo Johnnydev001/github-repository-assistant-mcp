@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import os
 from pathlib import Path
+import sys
 from urllib.parse import urlparse
 
 
@@ -66,15 +67,36 @@ class Settings:
         raw_local_source_dir = os.environ.get("LOCAL_SOURCE_DIR") or None
         local_source_dir: Path | None = None
         if raw_local_source_dir:
-            local_source_dir = Path(raw_local_source_dir).expanduser().resolve()
-            if not local_source_dir.exists():
-                raise RuntimeError(
-                    f"Configured local source directory does not exist: {local_source_dir}"
+            candidate = Path(raw_local_source_dir).expanduser()
+            if candidate.exists() and candidate.is_dir():
+                local_source_dir = candidate.resolve()
+            else:
+                # Heuristic fallback for containerized runs: if the provided path looks like
+                # a host filesystem path (e.g., starts with /Users or contains the repo name),
+                # map it to the container-local default path used by the Dockerfile.
+                fallback = Path("/app/server/local_source")
+                looks_like_host_path = (
+                    raw_local_source_dir.startswith("/Users/")
+                    or "portfolio-repository-mcp-server" in raw_local_source_dir
+                    or raw_local_source_dir.endswith("/server")
                 )
-            if not local_source_dir.is_dir():
-                raise RuntimeError(
-                    f"Configured local source directory is not a directory: {local_source_dir}"
-                )
+                if looks_like_host_path and fallback.exists():
+                    # Print a clear warning but continue using the container-local directory.
+                    print(
+                        f"WARNING: LOCAL_SOURCE_DIR '{raw_local_source_dir}' not found in container; "
+                        f"falling back to '{fallback}'",
+                        file=sys.stderr,
+                    )
+                    local_source_dir = fallback.resolve()
+                else:
+                    # Do not raise: make LOCAL_SOURCE_DIR optional. Only needed when
+                    # source_relative_path is used during update-file calls.
+                    print(
+                        f"WARNING: Configured local source directory does not exist: {candidate}; "
+                        "LOCAL_SOURCE_DIR will be ignored.",
+                        file=sys.stderr,
+                    )
+                    local_source_dir = None
 
         return cls(
             portfolio_repo_url=raw_repo_url,
