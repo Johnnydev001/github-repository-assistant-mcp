@@ -3,6 +3,9 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+ENV LOCAL_SOURCE_DIR=/app/server/local_source 
+RUN mkdir -p "${LOCAL_SOURCE_DIR}" && chown -R root:root "${LOCAL_SOURCE_DIR}"
+
 # Set working dir to server package location so pip install . finds pyproject.toml
 WORKDIR /app
 
