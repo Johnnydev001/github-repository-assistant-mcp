@@ -8,20 +8,8 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 import certifi
-# Try a few import shapes so this module is robust to how tests or the package import it
-try:
-    # Preferred when installed as package: server.models
-    from server.models import RequestUrlSuffix, CommitAuthor
-    from server.utils.parsing import parse_file_history_entry
-except Exception:
-    try:
-        # When imported as server.src.github_client
-        from server.src.models import RequestUrlSuffix, CommitAuthor
-        from server.src.utils.parsing import parse_file_history_entry
-    except Exception:
-        # When running from server/src on sys.path (tests use this)
-        from models import RequestUrlSuffix, CommitAuthor
-        from utils.parsing import parse_file_history_entry
+from models import RequestUrlSuffix, CommitAuthor
+from utils.parsing import parse_file_history_entry
    
 class GitHubRepositoryClient:
     def __init__(

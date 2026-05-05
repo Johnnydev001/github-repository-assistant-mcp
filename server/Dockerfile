@@ -3,24 +3,20 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+# Set working dir to server package location so pip install . finds pyproject.toml
 WORKDIR /app
 
-# Install build tooling for editable install
+# Install build tooling for building the package
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential \
+    && apt-get install -y --no-install-recommends build-essential ca-certificates git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy project files
-COPY server/pyproject.toml /app/
-# Preserve the original server/ layout so the package-dir mapping in pyproject works
-COPY server/ /app/server/
-# The client CLI was moved into server/cli.py; no separate client/ directory to copy
-COPY README.md /app/
-COPY .env.example /app/
+# Copy the server package directory (pyproject + src) into the image
+COPY . /app/server/
 
-# Install Python deps and package
+# Install dependencies and the package (non-editable for reproducible installs)
 RUN python -m pip install --upgrade pip setuptools wheel \
-    && python -m pip install --no-cache-dir -e .
+    && python -m pip install --no-cache-dir /app/server
 
-# Default entrypoint runs the client CLI. Pass the desired client subcommand as arguments to `docker run`.
-ENTRYPOINT ["python", "server/cli.py"]
+# Default entrypoint runs the installed console_script created by pyproject
+ENTRYPOINT ["portfolio-mcp-server"]

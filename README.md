@@ -1,3 +1,4 @@
+
 # Portfolio Repository MCP
 
 This repository contains a small local MCP setup for working with a private GitHub portfolio repository.
@@ -239,7 +240,7 @@ In normal usage, you do not need to start the server manually because the client
 
 ## Current Limitations
 
-- implemented MCP tools are focused on per-file operations and lightweight repo actions: `read_file`, `update_file`, `delete_file`, `commit_file`, `get_file_history`, and `create_pull_request`.
+- implemented MCP tools are focused on per-file operations and lightweight repo actions: `read_file`, `update_file`, `delete_file`, `get_file_history`, and `create_pull_request`.
 - the server reads from and modifies the remote GitHub repository using the GitHub REST APIs (Contents API for file ops, Pulls API for PRs).
 - bulk or atomic multi-file tree operations are not supported (use Git Data API or local workflows for complex changes).
 - authentication depends on GITHUB_TOKEN provided at runtime; ensure token has appropriate repo permissions.

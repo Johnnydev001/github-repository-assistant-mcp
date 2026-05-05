@@ -17,7 +17,7 @@ dependencies = [
 portfolio-mcp-server = "server:main"
 
 [tool.setuptools]
-package-dir = {"" = "server/src"}
+package-dir = {"server" = "src"}
 
 [tool.setuptools.packages.find]
-where = ["server/src"]
+where = ["src"]
