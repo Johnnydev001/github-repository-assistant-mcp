@@ -49,8 +49,19 @@ async function send() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     })
-    const data = await resp.json()
-    append('assistant', data.reply || JSON.stringify(data))
+    const text = await resp.text()
+    let replyText = ''
+    if (resp.ok) {
+      try {
+        const data = text ? JSON.parse(text) : null
+        replyText = data && data.reply ? data.reply : text || 'Empty response'
+      } catch (e) {
+        replyText = text || 'Empty response'
+      }
+    } else {
+      replyText = text || `Error ${resp.status}`
+    }
+    append('assistant', replyText)
   } catch (err) {
     append('assistant', 'Error: ' + String(err))
   } finally {
