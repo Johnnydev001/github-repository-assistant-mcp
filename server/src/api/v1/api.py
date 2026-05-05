@@ -1,8 +1,6 @@
 from fastapi import APIRouter, HTTPException, Request
 from pathlib import Path
-import subprocess
 import json
-import anyio
 
 router = APIRouter()
 
@@ -29,23 +27,22 @@ async def chat(request: Request):
     if not message:
         raise HTTPException(status_code=400, detail='message is required')
 
-    # Simple chat backend: echo the message and include output from `portfolio-mcp-server list-tools`
-    reply_parts = []
-    reply_parts.append(f"You said: {message}")
+    reply_parts = [f"You said: {message}"]
 
-    async def run_list_tools():
-        cmd = ['portfolio-mcp-server', 'list-tools']
-        try:
-            proc = await anyio.to_thread.run_sync(lambda: subprocess.run(cmd, capture_output=True, text=True, check=False))
-            out = proc.stdout.strip()
-            err = proc.stderr.strip()
-            if out:
-                reply_parts.append('Tools:\n' + out)
-            if err:
-                reply_parts.append('Errors:\n' + err)
-        except Exception as e:
-            reply_parts.append('Failed to run list-tools: ' + str(e))
+    # Use long-lived MCP ClientSession started at app startup
+    mcp_session = getattr(request.app.state, 'mcp_session', None)
+    if mcp_session is None:
+        raise HTTPException(status_code=503, detail='MCP session not initialized')
 
-    await run_list_tools()
+    try:
+        tools_result = await mcp_session.list_tools()
+        tools = []
+        for t in getattr(tools_result, 'tools', []) or []:
+            name = getattr(t, 'name', None) or str(t)
+            tools.append(name)
+        if tools:
+            reply_parts.append('Tools:\n' + '\n'.join(tools))
+    except Exception as e:
+        reply_parts.append('Failed to list tools: ' + str(e))
 
     return { 'reply': '\n\n'.join(reply_parts) }
