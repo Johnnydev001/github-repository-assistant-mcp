@@ -1,23 +1,36 @@
-# Stage 1: Build the application
-FROM node:20-slim AS buildstage
-
+# Stage 1: Dependencies
+FROM node:20-alpine AS deps
 WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
 
-# Copy package files and install dependencies
-COPY package*.json ./
-RUN npm install
-
-# Copy the rest of the source code and build
+# Stage 2: Builder
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-# Stage 2: Serve the application with Nginx
-FROM nginx:stable-alpine AS production-stage
+# Stage 3: Runner
+FROM node:20-alpine AS runner
+WORKDIR /app
 
-# Copy the build output from the first stage to Nginx's public folder
-COPY --from=buildstage /app/dist /usr/share/nginx/html
+ENV NODE_ENV=production
 
-# Expose port 80
-EXPOSE 80
+# Create a non-privileged user for security
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-CMD ["nginx", "-g", "daemon off;"]
+# Copy only the necessary standalone files
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+
+# This syntax copies the folder ONLY if it exists
+COPY --from=builder /app/public* ./public/
+
+USER nextjs
+
+EXPOSE 3000
+ENV PORT=3000
+
+CMD ["node", "server.js"]
