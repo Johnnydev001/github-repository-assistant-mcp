@@ -1,18 +1,15 @@
 "use client";
 
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
 import {
-  useChatRuntime,
-  AssistantChatTransport,
-} from "@assistant-ui/react-ai-sdk";
-import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
+  AssistantRuntimeProvider,
+  useLocalRuntime,
+  type ChatModelAdapter,
+} from "@assistant-ui/react";
 import { Thread } from "@/components/assistant-ui/thread";
 import {
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { ThreadListSidebar } from "@/components/assistant-ui/threadlist-sidebar";
 import { Separator } from "@/components/ui/separator";
 import {
   Breadcrumb,
@@ -23,37 +20,69 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 
+/** Extract plain text from a message's content (string or content-part array). */
+function contentToText(content: unknown): string {
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((p) =>
+        typeof p === "object" && p !== null && "text" in p
+          ? String((p as { text: unknown }).text)
+          : ""
+      )
+      .join("");
+  }
+  return "";
+}
+
+const MCPAdapter: ChatModelAdapter = {
+  async run({ messages, abortSignal }) {
+    // Use the last user message
+    const lastUser = [...messages].reverse().find((m) => m.role === "user");
+    const userText = lastUser ? contentToText(lastUser.content) : "";
+
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        messages: [{ role: "user", content: userText }],
+      }),
+      signal: abortSignal,
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Backend error ${res.status}: ${errText}`);
+    }
+
+    const data = await res.json();
+    const text =
+      data?.choices?.[0]?.message?.content ?? JSON.stringify(data, null, 2);
+
+    return {
+      content: [{ type: "text", text }],
+    };
+  },
+};
+
 export const Assistant = () => {
-  const runtime = useChatRuntime({
-    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
-    transport: new AssistantChatTransport({
-      api: "/api/chat",
-    }),
-  });
+  const runtime = useLocalRuntime(MCPAdapter);
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <SidebarProvider>
         <div className="flex h-dvh w-full pr-0.5">
-          <ThreadListSidebar />
           <SidebarInset>
             <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-              <SidebarTrigger />
               <Separator orientation="vertical" className="mr-2 h-4" />
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink
-                      href="https://www.assistant-ui.com/docs/getting-started"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Build Your Own ChatGPT UX
-                    </BreadcrumbLink>
+                    <BreadcrumbLink href="/">Portfolio MCP</BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className="hidden md:block" />
                   <BreadcrumbItem>
-                    <BreadcrumbPage>Starter Template</BreadcrumbPage>
+                    <BreadcrumbPage>Chat</BreadcrumbPage>
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
