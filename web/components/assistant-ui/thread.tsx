@@ -17,9 +17,9 @@ import {
   ComposerPrimitive,
   ErrorPrimitive,
   MessagePrimitive,
-  SuggestionPrimitive,
   ThreadPrimitive,
   useAuiState,
+  useThreadRuntime,
 } from "@assistant-ui/react";
 import {
   ArrowDownIcon,
@@ -29,12 +29,14 @@ import {
   ChevronRightIcon,
   CopyIcon,
   DownloadIcon,
+  FileSearchIcon,
   MoreHorizontalIcon,
   PencilIcon,
   RefreshCwIcon,
   SquareIcon,
+  WrenchIcon,
 } from "lucide-react";
-import type { FC } from "react";
+import { type FC, type FormEvent, useState } from "react";
 
 export const Thread: FC = () => {
   return (
@@ -101,44 +103,99 @@ const ThreadScrollToBottom: FC = () => {
 const ThreadWelcome: FC = () => {
   return (
     <div className="aui-thread-welcome-root my-auto flex grow flex-col">
-      <div className="aui-thread-welcome-center flex w-full grow flex-col items-center justify-center">
-        <div className="aui-thread-welcome-message flex size-full flex-col justify-center px-4">
-          <h1 className="aui-thread-welcome-message-inner fade-in slide-in-from-bottom-1 animate-in fill-mode-both font-semibold text-2xl duration-200">
-            Hello there!
+      <div className="flex w-full grow flex-col items-center justify-center px-4">
+        <div className="flex size-full flex-col justify-center">
+          <h1 className="fade-in slide-in-from-bottom-1 animate-in fill-mode-both font-semibold text-2xl duration-200">
+            Portfolio MCP
           </h1>
-          <p className="aui-thread-welcome-message-inner fade-in slide-in-from-bottom-1 animate-in fill-mode-both text-muted-foreground text-xl delay-75 duration-200">
-            How can I help you today?
+          <p className="fade-in slide-in-from-bottom-1 animate-in fill-mode-both text-muted-foreground text-xl delay-75 duration-200">
+            Interact with your GitHub repository
           </p>
         </div>
       </div>
-      <ThreadSuggestions />
+      <MCPQuickActions />
     </div>
   );
 };
 
-const ThreadSuggestions: FC = () => {
+/** Quick action cards shown on the welcome screen. */
+const MCPQuickActions: FC = () => {
   return (
-    <div className="aui-thread-welcome-suggestions grid w-full @md:grid-cols-2 gap-2 pb-4">
-      <ThreadPrimitive.Suggestions>
-        {() => <ThreadSuggestionItem />}
-      </ThreadPrimitive.Suggestions>
+    <div className="grid w-full gap-3 pb-4 @md:grid-cols-2">
+      <ListToolsAction />
+      <ReadFileAction />
     </div>
   );
 };
 
-const ThreadSuggestionItem: FC = () => {
+const ListToolsAction: FC = () => {
+  const thread = useThreadRuntime();
+  const send = () =>
+    thread.append({
+      role: "user",
+      content: [{ type: "text", text: "list tools" }],
+    });
+
   return (
-    <div className="aui-thread-welcome-suggestion-display fade-in slide-in-from-bottom-2 @md:nth-[n+3]:block nth-[n+3]:hidden animate-in fill-mode-both duration-200">
-      <SuggestionPrimitive.Trigger send asChild>
+    <button
+      type="button"
+      onClick={send}
+      className="cursor-pointer fade-in slide-in-from-bottom-2 animate-in fill-mode-both flex flex-col items-start gap-1 rounded-3xl border bg-background px-4 py-3 text-left text-sm transition-colors hover:bg-muted duration-200"
+    >
+      <span className="flex items-center gap-2 font-medium">
+        <WrenchIcon className="size-4 shrink-0 text-muted-foreground" />
+        List available tools
+      </span>
+      <span className="text-muted-foreground">
+        Show all MCP server capabilities
+      </span>
+    </button>
+  );
+};
+
+const ReadFileAction: FC = () => {
+  const thread = useThreadRuntime();
+  const [path, setPath] = useState("");
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const trimmed = path.trim();
+    if (!trimmed) return;
+    thread.append({
+      role: "user",
+      content: [{ type: "text", text: `read ${trimmed}` }],
+    });
+    setPath("");
+  };
+
+  return (
+    <form
+      onSubmit={submit}
+      className="fade-in slide-in-from-bottom-2 animate-in fill-mode-both flex flex-col gap-2 rounded-3xl border bg-background px-4 py-3 text-sm duration-200 delay-75"
+    >
+      <span className="flex items-center gap-2 font-medium">
+        <FileSearchIcon className="size-4 shrink-0 text-muted-foreground" />
+        Read a file
+      </span>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={path}
+          onChange={(e) => setPath(e.target.value)}
+          placeholder="e.g. README.md or src/index.ts"
+          className="min-w-0 flex-1 rounded-xl border bg-muted/50 px-3 py-1.5 text-sm outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/20"
+        />
         <Button
-          variant="ghost"
-          className="aui-thread-welcome-suggestion h-auto w-full @md:flex-col flex-wrap items-start justify-start gap-1 rounded-3xl border bg-background px-4 py-3 text-left text-sm transition-colors hover:bg-muted"
+          type="submit"
+          size="sm"
+          variant="default"
+          disabled={!path.trim()}
+          className="cursor-pointer rounded-xl"
         >
-          <SuggestionPrimitive.Title className="aui-thread-welcome-suggestion-text-1 font-medium" />
-          <SuggestionPrimitive.Description className="aui-thread-welcome-suggestion-text-2 text-muted-foreground empty:hidden" />
+          Read
         </Button>
-      </SuggestionPrimitive.Trigger>
-    </div>
+      </div>
+    </form>
   );
 };
 
@@ -152,7 +209,7 @@ const Composer: FC = () => {
         >
           <ComposerAttachments />
           <ComposerPrimitive.Input
-            placeholder="Send a message..."
+            placeholder="Send a message... (e.g. read README.md)"
             className="aui-composer-input max-h-32 min-h-10 w-full resize-none bg-transparent px-1.75 py-1 text-sm outline-none placeholder:text-muted-foreground/80"
             rows={1}
             autoFocus

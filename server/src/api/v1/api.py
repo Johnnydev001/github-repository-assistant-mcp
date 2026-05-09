@@ -30,20 +30,24 @@ def _detect_intent(text: str) -> dict:
     """Return intent dict: {action, params}"""
     t = text.strip()
 
+    # Matches both dotfiles (.gitignore, .env) and normal files (README.md, src/index.ts)
+    # Group 1: dotfile starting with '.'  e.g. .gitignore
+    # Group 2: regular file with extension  e.g. README.md
+    FILE_PAT = r'["\']?((?:\.[^\s"\']+|[^\s"\']+\.[^\s"\']+))["\']?'
+
     # --- list_tools ---
     if re.search(r'\blist\b.*\btools?\b|\btools?\b.*\blist\b|what can you do|available tools?', t, re.I):
         return {"action": "list_tools", "params": {}}
 
     # --- read_file ---
-    m = re.search(r'\bread\b.*?["\']?([^\s"\']+\.[a-zA-Z0-9]+)["\']?', t, re.I)
+    m = re.search(r'\bread\b.*?' + FILE_PAT, t, re.I)
     if m:
         return {"action": "read_file", "params": {"relative_path": m.group(1)}}
 
     # --- update_file ---
-    m = re.search(r'\bupdate\b.*?["\']?([^\s"\']+\.[a-zA-Z0-9]+)["\']?', t, re.I)
+    m = re.search(r'\bupdate\b.*?' + FILE_PAT, t, re.I)
     if m:
         path = m.group(1)
-        # Try to extract inline content after "with:" or "content:" or "set to"
         content_m = re.search(r'(?:with|content:|set to)[:\s]+["\']?(.+)["\']?$', t, re.I)
         content = content_m.group(1).strip() if content_m else ""
         commit_m = re.search(r'(?:commit[:\s]+)["\']?(.+?)["\']?(?:\s+content|$)', t, re.I)
@@ -54,7 +58,7 @@ def _detect_intent(text: str) -> dict:
         }
 
     # --- delete_file ---
-    m = re.search(r'\bdelete\b.*?["\']?([^\s"\']+\.[a-zA-Z0-9]+)["\']?', t, re.I)
+    m = re.search(r'\bdelete\b.*?' + FILE_PAT, t, re.I)
     if m:
         path = m.group(1)
         commit_m = re.search(r'commit[:\s]+["\']?(.+?)["\']?$', t, re.I)
