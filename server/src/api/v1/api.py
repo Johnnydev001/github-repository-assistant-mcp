@@ -68,6 +68,17 @@ def _detect_intent(text: str) -> dict:
             "params": {"relative_path": path, "commit_message": commit_msg},
         }
 
+    # --- get_file_history ---
+    m = re.search(r'(?:history|log|commits?)\b.*?' + FILE_PAT + r'|' + FILE_PAT + r'.*?(?:history|log|commits?)', t, re.I)
+    if m:
+        path = m.group(1) or m.group(2)
+        limit_m = re.search(r'\blimit[:\s]+(\d+)\b|\blast\s+(\d+)\b', t, re.I)
+        limit = int(limit_m.group(1) or limit_m.group(2)) if limit_m else 10
+        return {
+            "action": "get_file_history",
+            "params": {"relative_path": path, "limit": limit},
+        }
+
     # --- create_pull_request ---
     if re.search(r'\bcreate\b.*\bpr\b|\bcreate\b.*\bpull.?request\b|\bopen\b.*\bpr\b', t, re.I):
         title_m = re.search(r'(?:title[:\s]+)["\']?(.+?)["\']?(?:\s+from|\s+head|\s+base|$)', t, re.I)
@@ -194,6 +205,19 @@ async def assistant(request: Request):
                 )
                 reply = f"File **{path}** deleted.\n\n{_extract_tool_text(result)}"
 
+        # ---- get_file_history ----
+        elif action == "get_file_history":
+            path = params.get("relative_path", "")
+            limit = params.get("limit", 10)
+            if not path:
+                reply = "Please specify a file path (e.g. 'history README.md')."
+            else:
+                result = await mcp_session.call_tool(
+                    "get_file_history",
+                    {"file_name": path, "limit": limit},
+                )
+                reply = f"**Commit history for {path}**\n\n{_extract_tool_text(result)}"
+
         # ---- create_pull_request ----
         elif action == "create_pull_request":
             result = await mcp_session.call_tool("create_pull_request", params)
@@ -206,7 +230,7 @@ async def assistant(request: Request):
             reply = (
                 "I didn't understand that request. Here are the things I can do:\n\n"
                 + "\n".join(f"- **{t}**" for t in tools)
-                + "\n\nTry: *list tools*, *read README.md*, *delete old.md*, "
+                + "\n\nTry: *list tools*, *read README.md*, *history README.md*, *delete old.md*, "
                 "*update file.md commit: msg content: text*, or *create pr title: ... from: branch into: main*"
             )
 

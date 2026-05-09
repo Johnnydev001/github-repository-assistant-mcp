@@ -80,7 +80,8 @@ def get_file_history(file_name: str, branch: str = "main") -> str:
     ensure_initialized()
     # type: ignore[var-annotated]
     result = github_client.get_file_history(file_name=file_name, branch=branch)
-    return json.dumps(result, indent=2)
+    serializable = [vars(c) for c in result]
+    return json.dumps(serializable, indent=2)
 
 @mcp.tool()
 def create_pull_request(

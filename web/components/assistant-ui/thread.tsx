@@ -31,6 +31,8 @@ import {
   DownloadIcon,
   FileSearchIcon,
   FilePenIcon,
+  FileX2Icon,
+  HistoryIcon,
   MoreHorizontalIcon,
   PencilIcon,
   RefreshCwIcon,
@@ -125,7 +127,9 @@ const MCPQuickActions: FC = () => {
     <div className="grid w-full gap-3 pb-4 @md:grid-cols-2">
       <ListToolsAction />
       <ReadFileAction />
+      <GetFileHistoryAction />
       <UpdateFileAction />
+      <DeleteFileAction />
     </div>
   );
 };
@@ -272,6 +276,143 @@ const UpdateFileAction: FC = () => {
           className="rounded-xl"
         >
           Update
+        </Button>
+      </div>
+    </form>
+  );
+};
+
+
+const GetFileHistoryAction: FC = () => {
+  const thread = useThreadRuntime();
+  const [path, setPath] = useState("");
+  const [limit, setLimit] = useState("10");
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const trimmed = path.trim();
+    if (!trimmed) return;
+    const n = parseInt(limit, 10);
+    const limitPart = n && n !== 10 ? ` limit: ${n}` : "";
+    thread.append({
+      role: "user",
+      content: [{ type: "text", text: `history ${trimmed}${limitPart}` }],
+    });
+    setPath("");
+    setLimit("10");
+  };
+
+  return (
+    <form
+      onSubmit={submit}
+      className="fade-in slide-in-from-bottom-2 animate-in fill-mode-both flex flex-col gap-2 rounded-3xl border bg-background px-4 py-3 text-sm duration-200 delay-125"
+    >
+      <span className="flex items-center gap-2 font-medium">
+        <HistoryIcon className="size-4 shrink-0 text-muted-foreground" />
+        File history
+      </span>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={path}
+          onChange={(e) => setPath(e.target.value)}
+          placeholder="e.g. README.md or src/index.ts"
+          className="min-w-0 flex-1 rounded-xl border bg-muted/50 px-3 py-1.5 text-sm outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/20"
+        />
+        <input
+          type="number"
+          value={limit}
+          onChange={(e) => setLimit(e.target.value)}
+          min={1}
+          max={100}
+          className="w-16 rounded-xl border bg-muted/50 px-3 py-1.5 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
+          title="Max commits"
+        />
+        <Button
+          type="submit"
+          size="sm"
+          variant="default"
+          disabled={!path.trim()}
+          className="cursor-pointer rounded-xl"
+        >
+          History
+        </Button>
+      </div>
+    </form>
+  );
+};
+
+
+const DeleteFileAction: FC = () => {
+  const thread = useThreadRuntime();
+  const [path, setPath] = useState("");
+  const [commitMsg, setCommitMsg] = useState("");
+  const [confirmed, setConfirmed] = useState(false);
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const trimmedPath = path.trim();
+    const trimmedCommit = commitMsg.trim();
+    if (!trimmedPath || !trimmedCommit || !confirmed) return;
+    thread.append({
+      role: "user",
+      content: [
+        {
+          type: "text",
+          text: `delete ${trimmedPath} commit: ${trimmedCommit}`,
+        },
+      ],
+    });
+    setPath("");
+    setCommitMsg("");
+    setConfirmed(false);
+  };
+
+  const isValid = path.trim() && commitMsg.trim() && confirmed;
+
+  return (
+    <form
+      onSubmit={submit}
+      className="fade-in slide-in-from-bottom-2 animate-in fill-mode-both flex flex-col gap-2 rounded-3xl border border-destructive/30 bg-background px-4 py-3 text-sm duration-200 delay-150"
+    >
+      <span className="flex items-center gap-2 font-medium text-destructive">
+        <FileX2Icon className="size-4 shrink-0" />
+        Delete a file
+      </span>
+      <div className="grid gap-2 @md:grid-cols-2">
+        <input
+          type="text"
+          value={path}
+          onChange={(e) => setPath(e.target.value)}
+          placeholder="File path (e.g. old/file.md)"
+          className="rounded-xl border bg-muted/50 px-3 py-1.5 text-sm outline-none placeholder:text-muted-foreground/70 focus:border-destructive focus:ring-2 focus:ring-destructive/20"
+        />
+        <input
+          type="text"
+          value={commitMsg}
+          onChange={(e) => setCommitMsg(e.target.value)}
+          placeholder="Commit message"
+          className="rounded-xl border bg-muted/50 px-3 py-1.5 text-sm outline-none placeholder:text-muted-foreground/70 focus:border-destructive focus:ring-2 focus:ring-destructive/20"
+        />
+      </div>
+      <label className="flex cursor-pointer items-center gap-2 text-muted-foreground text-xs select-none">
+        <input
+          type="checkbox"
+          checked={confirmed}
+          onChange={(e) => setConfirmed(e.target.checked)}
+          className="accent-destructive"
+        />
+        I understand this will permanently delete the file
+      </label>
+      <div className="flex justify-end">
+        <Button
+          type="submit"
+          size="sm"
+          variant="destructive"
+          disabled={!isValid}
+          className="rounded-xl"
+        >
+          Delete
         </Button>
       </div>
     </form>
