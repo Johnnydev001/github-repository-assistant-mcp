@@ -22,4 +22,4 @@ RUN python -m pip install --upgrade pip setuptools wheel \
     && python -m pip install --no-cache-dir /app/server
 
 # Default entrypoint runs the installed console_script created by pyproject
-ENTRYPOINT ["portfolio-mcp-server"]
+ENTRYPOINT ["github-repository-assistant-mcp"]

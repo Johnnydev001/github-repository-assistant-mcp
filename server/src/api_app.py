@@ -18,7 +18,7 @@ from github_client import GitHubRepositoryClient
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Portfolio MCP Server API")
+app = FastAPI(title="MCP Server API")
 app.include_router(router, prefix="/api", tags=["API v1"], deprecated=False)
 
 # Event set once the MCP session is ready (or failed)
@@ -67,14 +67,14 @@ async def startup_event():
 
     # Also expose a GitHubRepositoryClient directly for lightweight REST calls (e.g. list_branches)
     try:
-        settings = Settings.from_environment()
+        settings = Settings.load()
         app.state.github_client = GitHubRepositoryClient(
-            owner=settings.portfolio_repo_owner,
-            repo=settings.portfolio_repo_name,
+            owner=settings.repo_owner,
+            repo=settings.repo_name,
             token=settings.github_token,
-            ref=settings.portfolio_repo_ref,
+            ref=settings.repo_ref,
         )
-        logger.info("GitHub client initialized for owner=%s repo=%s", settings.portfolio_repo_owner, settings.portfolio_repo_name)
+        logger.info("GitHub client initialized for owner=%s repo=%s", settings.repo_owner, settings.repo_name)
     except Exception as exc:
         logger.warning("Could not initialize GitHub client: %s", exc)
         app.state.github_client = None

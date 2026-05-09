@@ -35,12 +35,14 @@ import {
   GitPullRequestIcon,
   HistoryIcon,
   MoreHorizontalIcon,
+  PaperclipIcon,
   PencilIcon,
   RefreshCwIcon,
   SquareIcon,
   WrenchIcon,
+  XIcon,
 } from "lucide-react";
-import { type FC, type FormEvent, useEffect, useState } from "react";
+import { type FC, type FormEvent, useEffect, useRef, useState } from "react";
 
 export const Thread: FC = () => {
   return (
@@ -110,9 +112,9 @@ const ThreadWelcome: FC = () => {
       <div className="flex w-full grow flex-col items-center justify-center px-4">
         <div className="flex size-full flex-col justify-center">
           <h1 className="fade-in slide-in-from-bottom-1 animate-in fill-mode-both font-semibold text-2xl duration-200">
-            Portfolio MCP
+            Github Repository Assistant MCP
           </h1>
-          <p className="fade-in slide-in-from-bottom-1 animate-in fill-mode-both text-muted-foreground text-xl delay-75 duration-200">
+          <p className="mb-10 fade-in slide-in-from-bottom-1 animate-in fill-mode-both text-muted-foreground text-xl delay-75 duration-200">
             Interact with your GitHub repository
           </p>
         </div>
@@ -212,6 +214,26 @@ const UpdateFileAction: FC = () => {
   const [path, setPath] = useState("");
   const [commitMsg, setCommitMsg] = useState("");
   const [content, setContent] = useState("");
+  const [attachedName, setAttachedName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAttach = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAttachedName(file.name);
+    if (!path.trim()) setPath(file.name);
+    const reader = new FileReader();
+    reader.onload = (ev) => setContent((ev.target?.result as string) ?? "");
+    reader.readAsText(file);
+    // reset input so the same file can be re-attached
+    e.target.value = "";
+  };
+
+  const clearAttachment = () => {
+    setAttachedName(null);
+    setContent("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -231,6 +253,7 @@ const UpdateFileAction: FC = () => {
     setPath("");
     setCommitMsg("");
     setContent("");
+    setAttachedName(null);
   };
 
   const isValid = path.trim() && commitMsg.trim() && content.trim();
@@ -260,14 +283,48 @@ const UpdateFileAction: FC = () => {
           className="rounded-xl border bg-muted/50 px-3 py-1.5 text-sm outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/20"
         />
       </div>
-      <div className="flex gap-2">
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="New file content..."
-          rows={4}
-          className="min-w-0 flex-1 resize-y rounded-xl border bg-muted/50 px-3 py-1.5 font-mono text-sm outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/20"
-        />
+      <div className="relative flex gap-2">
+        {attachedName ? (
+          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+            <PaperclipIcon className="size-4 shrink-0" />
+            <span className="min-w-0 truncate font-mono">{attachedName}</span>
+            <button
+              type="button"
+              onClick={clearAttachment}
+              className="ml-auto shrink-0 rounded-md p-0.5 hover:text-destructive"
+              title="Remove file"
+            >
+              <XIcon className="size-3.5" />
+            </button>
+          </div>
+        ) : (
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="New file content… or attach a file →"
+            rows={4}
+            className="min-w-0 flex-1 resize-y rounded-xl border bg-muted/50 px-3 py-1.5 font-mono text-sm outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/20"
+          />
+        )}
+        <div className="flex flex-col gap-1">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleAttach}
+          />
+          <TooltipIconButton
+            type="button"
+            tooltip="Attach local file"
+            side="left"
+            variant="outline"
+            size="icon"
+            className="size-8 rounded-xl shrink-0"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <PaperclipIcon className="size-4" />
+          </TooltipIconButton>
+        </div>
       </div>
       <div className="flex justify-end">
         <Button
@@ -437,7 +494,7 @@ const CreatePRAction: FC = () => {
       .then((d) => {
         if (Array.isArray(d.branches)) setBranches(d.branches);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const submit = (e: FormEvent) => {

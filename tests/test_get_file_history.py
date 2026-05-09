@@ -19,11 +19,11 @@ class GitHubCreatePullRequestTests(unittest.TestCase):
     def test_get_file_history_success(self, mock_urlopen) -> None:
         # Return a JSON array like the real commits endpoint
         mock_urlopen.return_value.__enter__.return_value = StringIO(
-            '[{"commit":{"author":{"name":"Alice","email":"alice@example.com","date":"2026-04-27T12:34:56Z"},"message":"Initial commit"},"html_url":"https://github.com/octocat/portfolio/commit/abc"}]'
+            '[{"commit":{"author":{"name":"Alice","email":"alice@example.com","date":"2026-04-27T12:34:56Z"},"message":"Initial commit"},"html_url":"https://github.com/octocat/repository/commit/abc"}]'
         )
         client = GitHubRepositoryClient(
             owner="octocat",
-            repo="portfolio",
+            repo="repository",
             token="secret-token",
             ref="main",
         )

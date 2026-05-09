@@ -18,11 +18,11 @@ class GitHubCreatePullRequestTests(unittest.TestCase):
     @patch("github_client.urlopen")
     def test_create_pull_request_sends_post(self, mock_urlopen) -> None:
         mock_urlopen.return_value.__enter__.return_value = StringIO(
-            '{"number":123,"html_url":"https://github.com/octocat/portfolio/pull/123"}'
+            '{"number":123,"html_url":"https://github.com/octocat/repository/pull/123"}'
         )
         client = GitHubRepositoryClient(
             owner="octocat",
-            repo="portfolio",
+            repo="repository",
             token="secret-token",
             ref="main",
         )

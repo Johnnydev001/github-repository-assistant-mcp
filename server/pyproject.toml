@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "portfolio-repository-mcp-server"
+name = "github-repository-assistant-mcp"
 version = "0.1.0"
-description = "Minimal local-only MCP server for a private portfolio repository"
+description = "Minimal local-only MCP server for a private repository"
 requires-python = ">=3.11"
 dependencies = [
   "certifi>=2024.0.0",
@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-portfolio-mcp-server = "server:main"
+github-repository-assistant-mcp = "server:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

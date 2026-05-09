@@ -78,7 +78,7 @@ export const Assistant = () => {
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem className="hidden md:block">
-                    <BreadcrumbLink href="/">Portfolio MCP</BreadcrumbLink>
+                    <BreadcrumbLink href="/">Github Repository Assistant MCP</BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className="hidden md:block" />
                   <BreadcrumbItem>

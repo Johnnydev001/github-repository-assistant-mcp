@@ -16,7 +16,7 @@ from security import normalize_repo_path, resolve_local_source_path
 settings: Optional[Settings] = None
 github_client: Optional[GitHubRepositoryClient] = None
 
-mcp = FastMCP("portfolio-repository")
+mcp = FastMCP("repository")
 
 
 def ensure_initialized() -> None:
@@ -25,10 +25,10 @@ def ensure_initialized() -> None:
         settings = Settings.load()
     if github_client is None:
         github_client = GitHubRepositoryClient(
-            owner=settings.portfolio_repo_owner,  # type: ignore[arg-type]
-            repo=settings.portfolio_repo_name,  # type: ignore[arg-type]
+            owner=settings.repo_owner,  # type: ignore[arg-type]
+            repo=settings.repo_name,  # type: ignore[arg-type]
             token=settings.github_token,  # type: ignore[arg-type]
-            ref=settings.portfolio_repo_ref,  # type: ignore[arg-type]
+            ref=settings.repo_ref,  # type: ignore[arg-type]
         )
 
 

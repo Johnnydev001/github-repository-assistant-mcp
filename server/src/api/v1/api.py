@@ -48,10 +48,10 @@ def _detect_intent(text: str) -> dict:
     m = re.search(r'\bupdate\b.*?' + FILE_PAT, t, re.I)
     if m:
         path = m.group(1)
-        content_m = re.search(r'(?:with|content:|set to)[:\s]+["\']?(.+)["\']?$', t, re.I)
-        content = content_m.group(1).strip() if content_m else ""
         commit_m = re.search(r'(?:commit[:\s]+)["\']?(.+?)["\']?(?:\s+content|$)', t, re.I)
         commit_msg = commit_m.group(1).strip() if commit_m else f"Update {path}"
+        content_m = re.search(r'(?:with|content:|set to)[:\s]+["\']?([\s\S]+)["\']?$', t, re.I)
+        content = content_m.group(1).strip() if content_m else ""
         return {
             "action": "update_file",
             "params": {"relative_path": path, "commit_message": commit_msg, "content": content or None},

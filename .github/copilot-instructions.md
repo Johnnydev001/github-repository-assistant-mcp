@@ -13,7 +13,7 @@ Build, test, and run commands
 - Run the MCP server (standalone):
   python src/server.py
   # or after install
-  portfolio-mcp-server
+  github-repository-assistant-mcp
 
 - Client (starts server for you):
   python client/cli.py list-tools
@@ -42,7 +42,7 @@ High-level architecture
 - Interaction flow:
   1. Client spawns server subprocess communicating over stdio.
   2. Server registers MCP tools and authenticates using GITHUB_TOKEN (from .env).
-  3. Server uses src/github_client.py to call GitHub Contents API to read/update/delete files in the private portfolio repo.
+  3. Server uses src/github_client.py to call GitHub Contents API to read/update/delete files in the private repo.
 
 - Core modules to inspect when adding features:
   - src/server.py        (tool registration, server lifecycle)
@@ -54,9 +54,9 @@ High-level architecture
 Key conventions and patterns
 
 - Environment variables (set from .env):
-  - PORTFOLIO_REPO_URL
+  - REPO_URL
   - GITHUB_TOKEN (needs `repo` or fine-grained Contents read/write)
-  - PORTFOLIO_REPO_REF (branch/tag; optional)
+  - REPO_REF (branch/tag; optional)
   - LOCAL_SOURCE_DIR (only allowed directory for replacement files)
 
 - Update semantics:
@@ -70,7 +70,7 @@ Key conventions and patterns
 
 - Testing and structure:
   - Tests use unittest in tests/ and mock GitHub interactions where appropriate. Add a test file per new tool (e.g., tests/test_commit.py).
-  - Package uses src/ layout and a console script `portfolio-mcp-server` (pyproject.toml -> server:main).
+  - Package uses src/ layout and a console script `github-repository-assistant-mcp` (pyproject.toml -> server:main).
 
 Notes for adding a "commit on behalf of the user" action
 

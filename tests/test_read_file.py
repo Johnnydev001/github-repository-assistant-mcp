@@ -54,7 +54,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
         )
         client = GitHubRepositoryClient(
             owner="octocat",
-            repo="portfolio",
+            repo="repository",
             token="secret-token",
             ref="main",
         )
@@ -67,7 +67,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
     @patch("github_client.urlopen")
     def test_read_text_file_surfaces_404_details(self, mock_urlopen) -> None:
         mock_urlopen.side_effect = HTTPError(
-            url="https://api.github.com/repos/octocat/portfolio/contents/tsconfig.json?ref=main",
+            url="https://api.github.com/repos/octocat/repository/contents/tsconfig.json?ref=main",
             code=404,
             msg="Not Found",
             hdrs=None,
@@ -75,7 +75,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
         )
         client = GitHubRepositoryClient(
             owner="octocat",
-            repo="portfolio",
+            repo="repository",
             token="secret-token",
             ref="main",
         )
@@ -83,7 +83,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
         with self.assertRaises(FileNotFoundError) as context:
             client.read_text_file("tsconfig.json")
 
-        self.assertIn("octocat/portfolio:tsconfig.json @ main", str(context.exception))
+        self.assertIn("octocat/repository:tsconfig.json @ main", str(context.exception))
         self.assertIn("GitHub message: Not Found", str(context.exception))
 
     @patch("github_client.urlopen")
@@ -98,7 +98,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
         ]
         client = GitHubRepositoryClient(
             owner="octocat",
-            repo="portfolio",
+            repo="repository",
             token="secret-token",
             ref="main",
         )
@@ -116,7 +116,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
     def test_update_file_content_creates_when_file_is_missing(self, mock_urlopen) -> None:
         mock_urlopen.side_effect = [
             HTTPError(
-                url="https://api.github.com/repos/octocat/portfolio/contents/new-file.md?ref=main",
+                url="https://api.github.com/repos/octocat/repository/contents/new-file.md?ref=main",
                 code=404,
                 msg="Not Found",
                 hdrs=None,
@@ -128,7 +128,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
         ]
         client = GitHubRepositoryClient(
             owner="octocat",
-            repo="portfolio",
+            repo="repository",
             token="secret-token",
             ref="main",
         )
@@ -146,7 +146,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
     def test_update_file_content_supports_binary_payloads(self, mock_urlopen) -> None:
         mock_urlopen.side_effect = [
             HTTPError(
-                url="https://api.github.com/repos/octocat/portfolio/contents/file.pdf?ref=main",
+                url="https://api.github.com/repos/octocat/repository/contents/file.pdf?ref=main",
                 code=404,
                 msg="Not Found",
                 hdrs=None,
@@ -158,7 +158,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
         ]
         client = GitHubRepositoryClient(
             owner="octocat",
-            repo="portfolio",
+            repo="repository",
             token="secret-token",
             ref="main",
         )
@@ -182,7 +182,7 @@ class GitHubRepositoryClientTests(unittest.TestCase):
         ]
         client = GitHubRepositoryClient(
             owner="octocat",
-            repo="portfolio",
+            repo="repository",
             token="secret-token",
             ref="main",
         )

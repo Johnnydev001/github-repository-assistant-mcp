@@ -17,7 +17,7 @@ DEFAULT_SERVER_ARGS = [str(PROJECT_ROOT / "server" / "src" / "server.py")]
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Minimal MCP client for the portfolio repository server."
+        description="Minimal MCP client for the repository server."
     )
     parser.add_argument(
         "--server-command",

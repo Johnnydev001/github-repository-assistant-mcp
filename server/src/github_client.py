@@ -152,7 +152,7 @@ class GitHubRepositoryClient:
             "Accept": "application/vnd.github+json",
             "Authorization": f"Bearer {self.token}",
             "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "portfolio-repository-mcp-server",
+            "User-Agent": "repository-mcp-server",
         }
 
     def _get_contents_payload(self, relative_path: str) -> dict[str, object]:

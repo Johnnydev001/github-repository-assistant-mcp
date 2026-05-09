@@ -24,11 +24,11 @@ def _load_dotenv(dotenv_path: Path) -> None:
 
 @dataclass(frozen=True)
 class Settings:
-    portfolio_repo_url: str
-    portfolio_repo_owner: str
-    portfolio_repo_name: str
+    repo_url: str
+    repo_owner: str
+    repo_name: str
     github_token: str
-    portfolio_repo_ref: str | None
+    repo_ref: str | None
     local_source_dir: Path | None
 
     @classmethod
@@ -36,23 +36,23 @@ class Settings:
         project_root = Path(__file__).resolve().parents[1]
         _load_dotenv(project_root / ".env")
 
-        raw_repo_url = os.environ.get("PORTFOLIO_REPO_URL")
+        raw_repo_url = os.environ.get("REPO_URL") or os.environ.get("repo_url")
         if not raw_repo_url:
             raise RuntimeError(
-                "PORTFOLIO_REPO_URL is not set. Configure it in your environment or .env."
+                "REPO_URL is not set. Configure it in your environment or .env."
             )
 
         parsed_url = urlparse(raw_repo_url)
         if parsed_url.scheme != "https" or parsed_url.netloc != "github.com":
             raise RuntimeError(
-                "PORTFOLIO_REPO_URL must be a GitHub HTTPS URL, for example "
+                "repo_url must be a GitHub HTTPS URL, for example "
                 "https://github.com/your-user/your-private-repo.git"
             )
 
         repo_path_parts = parsed_url.path.strip("/").removesuffix(".git").split("/")
         if len(repo_path_parts) != 2 or not all(repo_path_parts):
             raise RuntimeError(
-                "PORTFOLIO_REPO_URL must point to a GitHub repository path like "
+                "repo_url must point to a GitHub repository path like "
                 "https://github.com/your-user/your-private-repo.git"
             )
 
@@ -63,7 +63,7 @@ class Settings:
                 "private repository in your environment or .env."
             )
 
-        repo_ref = os.environ.get("PORTFOLIO_REPO_REF") or None
+        repo_ref = os.environ.get("REPO_REF") or os.environ.get("repo_ref") or None
         raw_local_source_dir = os.environ.get("LOCAL_SOURCE_DIR") or None
         local_source_dir: Path | None = None
         if raw_local_source_dir:
@@ -77,7 +77,7 @@ class Settings:
                 fallback = Path("/app/server/local_source")
                 looks_like_host_path = (
                     raw_local_source_dir.startswith("/Users/")
-                    or "portfolio-repository-mcp-server" in raw_local_source_dir
+                    or "repository-mcp-server" in raw_local_source_dir
                     or raw_local_source_dir.endswith("/server")
                 )
                 if looks_like_host_path and fallback.exists():
@@ -99,10 +99,10 @@ class Settings:
                     local_source_dir = None
 
         return cls(
-            portfolio_repo_url=raw_repo_url,
-            portfolio_repo_owner=repo_path_parts[0],
-            portfolio_repo_name=repo_path_parts[1],
+            repo_url=raw_repo_url,
+            repo_owner=repo_path_parts[0],
+            repo_name=repo_path_parts[1],
             github_token=github_token,
-            portfolio_repo_ref=repo_ref,
+            repo_ref=repo_ref,
             local_source_dir=local_source_dir,
         )

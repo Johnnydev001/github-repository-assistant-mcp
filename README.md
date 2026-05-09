@@ -1,10 +1,10 @@
 
-# Portfolio Repository MCP
+# Github Repository Assistant MCP
 
-This repository contains a small local MCP setup for working with a private GitHub portfolio repository.
+This repository contains a small local MCP setup for working with a private GitHub repository.
 
 The code in this repository is public.
-The target portfolio repository remains private.
+The target repository remains private.
 Credentials are not committed here and must be provided locally through environment variables.
 
 ## What This Repository Contains
@@ -80,17 +80,17 @@ This client exists so you can use the MCP server without needing a separate desk
 Copy `.env.example` to `.env` and set:
 
 ```env
-PORTFOLIO_REPO_URL=https://github.com/your-user/your-private-portfolio-repo.git
+REPO_URL=https://github.com/your-user/your-private-repo.git
 GITHUB_TOKEN=github_pat_your_token_here
-PORTFOLIO_REPO_REF=main
+REPO_REF=main
 LOCAL_SOURCE_DIR=/absolute/path/to/local/replacement-files
 ```
 
 Variable meaning:
 
-- `PORTFOLIO_REPO_URL`: the private GitHub repository to target
+- `REPO_URL`: the private GitHub repository to target
 - `GITHUB_TOKEN`: a token with access to that private repository
-- `PORTFOLIO_REPO_REF`: optional branch or tag to read from
+- `REPO_REF`: optional branch or tag to read from
 - `LOCAL_SOURCE_DIR`: optional local directory used when `update_file` replaces content from a local file
 
 For private repositories:
@@ -128,34 +128,34 @@ Docker (portable)
 Build the image locally:
 
 ```bash
-docker build -t portfolio-mcp .
+docker build -t github-repository-assistant-mcp .
 ```
 
-Run client commands with the image. Provide required env vars (at minimum PORTFOLIO_REPO_URL and GITHUB_TOKEN).
+Run client commands with the image. Provide required env vars (at minimum REPO_URL and GITHUB_TOKEN).
 
 Examples:
 
 List tools:
 
 ```bash
-docker run --rm -e PORTFOLIO_REPO_URL="https://github.com/your-user/your-private-repo.git" -e GITHUB_TOKEN="ghp_..." portfolio-mcp list-tools
+docker run --rm -e REPO_URL="https://github.com/your-user/your-private-repo.git" -e GITHUB_TOKEN="ghp_..." github-repository-assistant-mcp list-tools
 ```
 
 Read a file:
 
 ```bash
-docker run --rm -e PORTFOLIO_REPO_URL="https://github.com/your-user/your-private-repo.git" -e GITHUB_TOKEN="ghp_..." portfolio-mcp read-file --path README.md
+docker run --rm -e REPO_URL="https://github.com/your-user/your-private-repo.git" -e GITHUB_TOKEN="ghp_..." github-repository-assistant-mcp read-file --path README.md
 ```
 
 Commit a file from a host directory (mount host dir into container and set LOCAL_SOURCE_DIR to the mount point):
 
 ```bash
 docker run --rm \
-  -e PORTFOLIO_REPO_URL="https://github.com/your-user/your-private-repo.git" \
+  -e REPO_URL="https://github.com/your-user/your-private-repo.git" \
   -e GITHUB_TOKEN="ghp_..." \
   -e LOCAL_SOURCE_DIR="/data" \
   -v /path/on/host/local_files:/data \
-  portfolio-mcp commit-file --path README.md --message "Update via docker" --source-path README.md --author-name "Alice" --author-email "alice@example.com"
+  github-repository-assistant-mcp commit-file --path README.md --message "Update via docker" --source-path README.md --author-name "Alice" --author-email "alice@example.com"
 ```
 
 Notes:
@@ -225,7 +225,7 @@ python src/server.py
 After installation, this also works:
 
 ```bash
-portfolio-mcp-server
+github-repository-assistant-mcp-server
 ```
 
 In normal usage, you do not need to start the server manually because the client starts it for you.
