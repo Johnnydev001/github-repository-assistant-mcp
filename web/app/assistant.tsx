@@ -19,6 +19,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { ArrowLeftIcon } from "lucide-react";
 
 /** Extract plain text from a message's content (string or content-part array). */
 function contentToText(content: unknown): string {
@@ -77,11 +78,19 @@ export const Assistant = () => {
               <Separator orientation="vertical" className="mr-2 h-4" />
               <Breadcrumb>
                 <BreadcrumbList>
+                  {/* Mobile: back arrow link */}
+                  <BreadcrumbItem className="md:hidden">
+                    <BreadcrumbLink href="/" className="flex items-center gap-1">
+                      <ArrowLeftIcon className="size-4" />
+                      Home
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  {/* Desktop: full breadcrumb trail */}
                   <BreadcrumbItem className="hidden md:block">
                     <BreadcrumbLink href="/">Github Repository Assistant MCP</BreadcrumbLink>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className="hidden md:block" />
-                  <BreadcrumbItem>
+                  <BreadcrumbItem className="hidden md:block">
                     <BreadcrumbPage>Chat</BreadcrumbPage>
                   </BreadcrumbItem>
                 </BreadcrumbList>
