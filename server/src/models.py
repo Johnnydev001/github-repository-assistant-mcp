@@ -13,3 +13,4 @@ class RequestUrlSuffix(Enum):
     PULL_REQUEST = "pulls"
     COMMITS = "commits"
     CONTENTS = "contents"
+    BRANCHES = "branches"

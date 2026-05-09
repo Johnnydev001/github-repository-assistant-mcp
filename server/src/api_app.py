@@ -10,6 +10,11 @@ import sys
 from mcp.client.stdio import StdioServerParameters, stdio_client
 from mcp import ClientSession
 
+# Import config + github client so we can expose list_branches without going through MCP stdio
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from config import Settings
+from github_client import GitHubRepositoryClient
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -59,6 +64,20 @@ async def startup_event():
     )
 
     app.state._mcp_task = asyncio.create_task(_mcp_runner(params))
+
+    # Also expose a GitHubRepositoryClient directly for lightweight REST calls (e.g. list_branches)
+    try:
+        settings = Settings.from_environment()
+        app.state.github_client = GitHubRepositoryClient(
+            owner=settings.portfolio_repo_owner,
+            repo=settings.portfolio_repo_name,
+            token=settings.github_token,
+            ref=settings.portfolio_repo_ref,
+        )
+        logger.info("GitHub client initialized for owner=%s repo=%s", settings.portfolio_repo_owner, settings.portfolio_repo_name)
+    except Exception as exc:
+        logger.warning("Could not initialize GitHub client: %s", exc)
+        app.state.github_client = None
 
     # Wait up to 10 s for the session to be ready before accepting requests
     try:

@@ -229,9 +229,19 @@ class GitHubRepositoryClient:
         except Exception:
             return "no response body"
 
-        if isinstance(payload, dict) and payload.get("message"):
-            return str(payload["message"])
-        return json.dumps(payload)
+        if not isinstance(payload, dict):
+            return json.dumps(payload)
+
+        message = str(payload.get("message", ""))
+        errors = payload.get("errors")
+        if errors:
+            details = "; ".join(
+                e.get("message") or f"{e.get('field', '?')} {e.get('code', '?')}"
+                if isinstance(e, dict) else str(e)
+                for e in errors
+            )
+            return f"{message}: {details}"
+        return message or json.dumps(payload)
 
 
     # The following methods are used to build request URLs
@@ -240,6 +250,13 @@ class GitHubRepositoryClient:
 
     def build_pull_request_url(self) -> str:
         return f"{self.build_base_url()}{RequestUrlSuffix.PULL_REQUEST.value}"
+
+    def list_branches(self, per_page: int = 100) -> list[str]:
+        url = f"{self.build_base_url()}{RequestUrlSuffix.BRANCHES.value}?per_page={per_page}"
+        payload = self._perform_json_request(url, relative_path="", data=None, method="GET")
+        if isinstance(payload, list):
+            return [b["name"] for b in payload if isinstance(b, dict) and "name" in b]
+        return []
 
     def build_commits_url(self, file_name: str, branch: str = "main") -> str:
         base = f"{self.build_base_url()}{RequestUrlSuffix.COMMITS.value}"

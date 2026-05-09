@@ -32,6 +32,7 @@ import {
   FileSearchIcon,
   FilePenIcon,
   FileX2Icon,
+  GitPullRequestIcon,
   HistoryIcon,
   MoreHorizontalIcon,
   PencilIcon,
@@ -39,7 +40,7 @@ import {
   SquareIcon,
   WrenchIcon,
 } from "lucide-react";
-import { type FC, type FormEvent, useState } from "react";
+import { type FC, type FormEvent, useEffect, useState } from "react";
 
 export const Thread: FC = () => {
   return (
@@ -128,8 +129,9 @@ const MCPQuickActions: FC = () => {
       <ListToolsAction />
       <ReadFileAction />
       <GetFileHistoryAction />
-      <UpdateFileAction />
       <DeleteFileAction />
+      <UpdateFileAction />
+      <CreatePRAction />
     </div>
   );
 };
@@ -413,6 +415,125 @@ const DeleteFileAction: FC = () => {
           className="rounded-xl"
         >
           Delete
+        </Button>
+      </div>
+    </form>
+  );
+};
+
+
+const CreatePRAction: FC = () => {
+  const thread = useThreadRuntime();
+  const [title, setTitle] = useState("");
+  const [head, setHead] = useState("");
+  const [base, setBase] = useState("main");
+  const [body, setBody] = useState("");
+  const [branches, setBranches] = useState<string[]>([]);
+
+  // Fetch available branches once on mount
+  useEffect(() => {
+    fetch("/api/branches")
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d.branches)) setBranches(d.branches);
+      })
+      .catch(() => {});
+  }, []);
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const t = title.trim();
+    const h = head.trim();
+    const b = base.trim();
+    if (!t || !h || !b) return;
+    const bodyPart = body.trim() ? ` body: ${body.trim()}` : "";
+    thread.append({
+      role: "user",
+      content: [
+        {
+          type: "text",
+          text: `create pr title: ${t} from: ${h} into: ${b}${bodyPart}`,
+        },
+      ],
+    });
+    setTitle("");
+    setHead("");
+    setBase("main");
+    setBody("");
+  };
+
+  const isValid = title.trim() && head.trim() && base.trim();
+
+  const selectClass =
+    "rounded-xl border bg-muted/50 px-3 py-1.5 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/20 cursor-pointer";
+
+  return (
+    <form
+      onSubmit={submit}
+      className="fade-in slide-in-from-bottom-2 animate-in fill-mode-both col-span-full flex flex-col gap-2 rounded-3xl border bg-background px-4 py-3 text-sm duration-200 delay-200"
+    >
+      <span className="flex items-center gap-2 font-medium">
+        <GitPullRequestIcon className="size-4 shrink-0 text-muted-foreground" />
+        Create a pull request
+      </span>
+      <input
+        type="text"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="PR title"
+        className="rounded-xl border bg-muted/50 px-3 py-1.5 text-sm outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/20"
+      />
+      <div className="grid gap-2 @md:grid-cols-2">
+        {branches.length > 0 ? (
+          <>
+            <select value={head} onChange={(e) => setHead(e.target.value)} className={selectClass}>
+              <option value="">Head branch (from)…</option>
+              {branches.map((b) => (
+                <option key={b} value={b}>{b}</option>
+              ))}
+            </select>
+            <select value={base} onChange={(e) => setBase(e.target.value)} className={selectClass}>
+              <option value="">Base branch (into)…</option>
+              {branches.map((b) => (
+                <option key={b} value={b}>{b}</option>
+              ))}
+            </select>
+          </>
+        ) : (
+          <>
+            <input
+              type="text"
+              value={head}
+              onChange={(e) => setHead(e.target.value)}
+              placeholder="Head branch (from)"
+              className="rounded-xl border bg-muted/50 px-3 py-1.5 text-sm outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/20"
+            />
+            <input
+              type="text"
+              value={base}
+              onChange={(e) => setBase(e.target.value)}
+              placeholder="Base branch (into)"
+              className="rounded-xl border bg-muted/50 px-3 py-1.5 text-sm outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/20"
+            />
+          </>
+        )}
+      </div>
+      <textarea
+        value={body}
+        onChange={(e) => setBody(e.target.value)}
+        placeholder="PR description (optional)"
+        rows={2}
+        className="resize-y rounded-xl border bg-muted/50 px-3 py-1.5 text-sm outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/20"
+      />
+      <div className="flex justify-end">
+        <Button
+          type="submit"
+          size="sm"
+          variant="default"
+          disabled={!isValid}
+          className="rounded-xl"
+        >
+          Open PR
         </Button>
       </div>
     </form>

@@ -82,15 +82,16 @@ def _detect_intent(text: str) -> dict:
     # --- create_pull_request ---
     if re.search(r'\bcreate\b.*\bpr\b|\bcreate\b.*\bpull.?request\b|\bopen\b.*\bpr\b', t, re.I):
         title_m = re.search(r'(?:title[:\s]+)["\']?(.+?)["\']?(?:\s+from|\s+head|\s+base|$)', t, re.I)
-        head_m = re.search(r'\bfrom\b\s+["\']?(\S+)["\']?', t, re.I) or re.search(r'\bhead\b[:\s]+["\']?(\S+)["\']?', t, re.I)
-        base_m = re.search(r'\binto\b\s+["\']?(\S+)["\']?', t, re.I) or re.search(r'\bbase\b[:\s]+["\']?(\S+)["\']?', t, re.I)
+        head_m = re.search(r'\bfrom\b[:\s]+["\']?(\S+)["\']?', t, re.I) or re.search(r'\bhead\b[:\s]+["\']?(\S+)["\']?', t, re.I)
+        base_m = re.search(r'\binto\b[:\s]+["\']?(\S+)["\']?', t, re.I) or re.search(r'\bbase\b[:\s]+["\']?(\S+)["\']?', t, re.I)
+        body_m = re.search(r'\bbody\b[:\s]+(.+?)$', t, re.I)
         return {
             "action": "create_pull_request",
             "params": {
                 "title": title_m.group(1).strip() if title_m else t[:80],
                 "head": head_m.group(1).strip() if head_m else "feature-branch",
                 "base": base_m.group(1).strip() if base_m else "main",
-                "body": t,
+                "body": body_m.group(1).strip() if body_m else None,
             },
         }
 
@@ -135,6 +136,18 @@ async def list_tools_get(request: Request):
     result = await mcp_session.list_tools()
     tools = [getattr(t, "name", str(t)) for t in (getattr(result, "tools", []) or [])]
     return {"tools": tools}
+
+
+@router.get("/branches")
+async def list_branches(request: Request):
+    github_client = getattr(request.app.state, "github_client", None)
+    if github_client is None:
+        return JSONResponse(status_code=503, content={"error": "GitHub client not initialized"})
+    try:
+        branches = github_client.list_branches()
+        return {"branches": branches}
+    except Exception as exc:
+        return JSONResponse(status_code=500, content={"error": str(exc)})
 
 
 @router.post("/assistant")
