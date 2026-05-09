@@ -30,6 +30,7 @@ import {
   CopyIcon,
   DownloadIcon,
   FileSearchIcon,
+  FilePenIcon,
   MoreHorizontalIcon,
   PencilIcon,
   RefreshCwIcon,
@@ -124,6 +125,7 @@ const MCPQuickActions: FC = () => {
     <div className="grid w-full gap-3 pb-4 @md:grid-cols-2">
       <ListToolsAction />
       <ReadFileAction />
+      <UpdateFileAction />
     </div>
   );
 };
@@ -198,6 +200,84 @@ const ReadFileAction: FC = () => {
     </form>
   );
 };
+
+const UpdateFileAction: FC = () => {
+  const thread = useThreadRuntime();
+  const [path, setPath] = useState("");
+  const [commitMsg, setCommitMsg] = useState("");
+  const [content, setContent] = useState("");
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const trimmedPath = path.trim();
+    const trimmedCommit = commitMsg.trim();
+    const trimmedContent = content.trim();
+    if (!trimmedPath || !trimmedCommit || !trimmedContent) return;
+    thread.append({
+      role: "user",
+      content: [
+        {
+          type: "text",
+          text: `update ${trimmedPath} commit: ${trimmedCommit} content: ${trimmedContent}`,
+        },
+      ],
+    });
+    setPath("");
+    setCommitMsg("");
+    setContent("");
+  };
+
+  const isValid = path.trim() && commitMsg.trim() && content.trim();
+
+  return (
+    <form
+      onSubmit={submit}
+      className="fade-in slide-in-from-bottom-2 animate-in fill-mode-both col-span-full flex flex-col gap-2 rounded-3xl border bg-background px-4 py-3 text-sm duration-200 delay-100"
+    >
+      <span className="flex items-center gap-2 font-medium">
+        <FilePenIcon className="size-4 shrink-0 text-muted-foreground" />
+        Update a file
+      </span>
+      <div className="grid gap-2 @md:grid-cols-2">
+        <input
+          type="text"
+          value={path}
+          onChange={(e) => setPath(e.target.value)}
+          placeholder="File path (e.g. README.md)"
+          className="rounded-xl border bg-muted/50 px-3 py-1.5 text-sm outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/20"
+        />
+        <input
+          type="text"
+          value={commitMsg}
+          onChange={(e) => setCommitMsg(e.target.value)}
+          placeholder="Commit message"
+          className="rounded-xl border bg-muted/50 px-3 py-1.5 text-sm outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/20"
+        />
+      </div>
+      <div className="flex gap-2">
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="New file content..."
+          rows={4}
+          className="min-w-0 flex-1 resize-y rounded-xl border bg-muted/50 px-3 py-1.5 font-mono text-sm outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/20"
+        />
+      </div>
+      <div className="flex justify-end">
+        <Button
+          type="submit"
+          size="sm"
+          variant="default"
+          disabled={!isValid}
+          className="rounded-xl"
+        >
+          Update
+        </Button>
+      </div>
+    </form>
+  );
+};
+
 
 const Composer: FC = () => {
   return (
