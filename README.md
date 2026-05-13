@@ -1,13 +1,13 @@
 
 # Github Repository Assistant MCP
 
-![Application](./screenshot-example.png)
-
 This repository contains a local MCP setup and a web-based chat UI for interacting with any GitHub repository through a conversational interface.
 
 The code in this repository is public.
 The target repository remains private.
 Credentials are not committed here and must be provided locally through environment variables.
+
+![Application](./screenshot-example.png)
 
 ## What This Repository Contains
 
